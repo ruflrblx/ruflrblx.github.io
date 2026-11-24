@@ -24,7 +24,7 @@
     "3RD",
     "4TH"
    ],
-   "guide": "+1 per 25 yards, +4 TD, +0.1 per completion, +1 3rd-down conv, +2 4th-down conv; -2 INT, -2 fumble, -0.5 sacked"
+   "guide": "+1 per 25 yards, +3 TD, +0.1 per completion, +1 3rd-down conv, +2 4th-down conv; -2 INT, -2 fumble, -0.5 sacked"
   },
   {
    "key": "RB",
@@ -41,7 +41,7 @@
     "4TH",
     "20+"
    ],
-   "guide": "+1 per 10 yards, +6 TD, +0.25 first down, +1 per 20+ yd run, +1 3rd-down, +2 4th-down; -2 fumble"
+   "guide": "+1 per 10 yards, +3 TD, +0.25 first down, +1 per 20+ yd run, +1 3rd-down, +2 4th-down; -2 fumble"
   },
   {
    "key": "WR",
@@ -59,7 +59,7 @@
     "3RD",
     "4TH"
    ],
-   "guide": "+1 per 10 yards, +6 TD, +0.5 per catch, +0.25 first down, +1 3rd-down, +2 4th-down"
+   "guide": "+1 per 10 yards, +3 TD, +0.5 per catch, +0.25 first down, +1 3rd-down, +2 4th-down"
   },
   {
    "key": "DE",
@@ -77,7 +77,7 @@
     "TD",
     "RUSH"
    ],
-   "guide": "+4 sack, +1.5 TFL, +0.75 tackle, +0.5 QB hit, +0.25 pressure, +4 safety, +6 TD"
+   "guide": "+3 sack, +1.5 TFL, +0.75 tackle, +0.5 QB hit, +0.25 pressure, +3 safety, +3 TD"
   },
   {
    "key": "DB",
@@ -95,7 +95,7 @@
     "YDA",
     "TDA"
    ],
-   "guide": "+5 INT, +6 pick six, +1 TU, +0.75 tackle, +0.5 per incompletion forced (target not caught); -1 per 33 yards allowed, -3 TD allowed"
+   "guide": "+5 INT, +3 pick six, +1 TU, +0.75 tackle, +0.5 per incompletion forced (target not caught); -1 per 33 yards allowed, -3 TD allowed"
   },
   {
    "key": "K",
