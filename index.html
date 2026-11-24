@@ -2,238 +2,100 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>RUFL · Ultimate Football League</title>
-<meta name="description" content="RUFL is the Roblox Ultimate Football league. Season 8, Series 1 is live with a $200 Ultimate Bowl, and teams are signing players now. Join the Discord.">
+<meta name="description" content="RUFL is the Roblox Ultimate Football league. Scores, standings, stats and the road to the $200 Ultimate Bowl. Season 8 is live.">
 <meta name="theme-color" content="#0b0614">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RUFL">
 <meta property="og:title" content="RUFL · Season 8 · $200 Ultimate Bowl">
-<meta property="og:description" content="The Ultimate Football league on Roblox. Teams are signing players now. Join the Discord.">
+<meta property="og:description" content="Scores, standings, stats and the road to the Ultimate Bowl. Teams are signing players now.">
 <meta property="og:url" content="https://ruflrblx.github.io/">
 <meta property="og:image" content="https://ruflrblx.github.io/img/og.jpg">
-<meta name="twitter:image" content="https://ruflrblx.github.io/img/og.jpg">
-<link rel="canonical" href="https://ruflrblx.github.io/">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" type="image/png" href="img/favicon.png">
-<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="twitter:image" content="https://ruflrblx.github.io/img/og.jpg">
+<link rel="icon" type="image/png" href="/img/favicon.png">
+<link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
 </head>
-<body>
+<body class="preload">
+<a class="skip" href="#app">Skip to content</a>
 
-<header class="nav" id="top">
-  <a class="brand" href="#top" aria-label="RUFL home">
-    <img src="img/logo.png" alt="" width="44" height="43">
-    <span>RUFL</span>
+<header class="nav" id="nav">
+  <a class="brand" href="/" data-link aria-label="RUFL home">
+    <img src="/img/logo.png" alt="" width="44" height="43">
+    <span>RUFL<small>Season <b class="js-season">8</b></small></span>
   </a>
-  <nav class="links" id="links">
-    <a href="#about">The League</a>
-    <a href="#season">Season 8</a>
-    <a href="#bowl">Ultimate Bowl</a>
-    <a href="#join">How to Join</a>
-    <a href="#faq">FAQ</a>
+  <nav class="links" id="links" aria-label="Main">
+    <a href="/" data-link data-sec="home">Home</a>
+    <a href="/scores" data-link data-sec="scores">Scores</a>
+    <a href="/standings" data-link data-sec="standings">Standings</a>
+    <a href="/stats" data-link data-sec="stats">Stats</a>
+    <a href="/teams" data-link data-sec="teams">Teams</a>
+    <a href="/mvp" data-link data-sec="mvp">MVP Race</a>
+    <div class="more">
+      <button class="more-btn" id="moreBtn" aria-expanded="false" aria-haspopup="true" data-sec="more">More <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="more-menu" id="moreMenu">
+        <a href="/awards" data-link data-sec="awards">Weekly awards</a>
+        <a href="/records" data-link data-sec="records">Record book</a>
+        <a href="/points" data-link data-sec="points">How PTS work</a>
+        <a href="/rules" data-link data-sec="rules">Rule book</a>
+        <a href="/#bowl" data-link>Ultimate Bowl</a>
+        <a href="/#join" data-link>How to join</a>
+      </div>
+    </div>
   </nav>
-  <a class="btn btn-sm discord-link" href="https://discord.gg/Z6WvRbmyQ" target="_blank" rel="noopener">
+  <button class="icon-btn" id="searchBtn" aria-label="Search players and teams" title="Search ( / )">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+  </button>
+  <a class="btn btn-sm discord-link nav-join" href="https://discord.gg/Z6WvRbmyQ" target="_blank" rel="noopener">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18.1a19.9 19.9 0 0 0 6 3l1.3-2.1a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2.1a19.8 19.8 0 0 0 6-3c.5-5.2-.8-9.7-3.6-13.7ZM8 15.4c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.6 8 10.6s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z"/></svg>
     <span>Join</span>
   </a>
   <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="links"><i></i><i></i><i></i></button>
 </header>
 
-<main>
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-bg" id="heroBg" aria-hidden="true"></div>
-    <div class="hero-shade" aria-hidden="true"></div>
-    <div class="hero-inner">
-      <div class="hero-copy">
-        <p class="eyebrow"><span class="dot"></span>Season 8 · Series 1 is live</p>
-        <h1>
-          <span class="h1-top">The</span>
-          <span class="h1-main">Ultimate</span>
-          <span class="h1-main outline">Football</span>
-          <span class="h1-main">League</span>
-        </h1>
-        <p class="lede">RUFL is where Roblox's Ultimate Football players go to compete for real. Draft into a team, run it every week, and play for a <strong>$200 Ultimate Bowl</strong>.</p>
-        <div class="cta-row">
-          <a class="btn btn-lg discord-link" href="https://discord.gg/Z6WvRbmyQ" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18.1a19.9 19.9 0 0 0 6 3l1.3-2.1a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2.1a19.8 19.8 0 0 0 6-3c.5-5.2-.8-9.7-3.6-13.7ZM8 15.4c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.6 8 10.6s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z"/></svg>
-            Join the Discord
-          </a>
-          <a class="btn btn-lg btn-ghost" href="#join">How it works</a>
-        </div>
-        <p class="live-pill" id="livePill"><span class="pulse"></span><b data-live="online">978</b> online now · <b data-live="members">3,806</b> members</p>
-      </div>
-      <div class="hero-logo" aria-hidden="true">
-        <div class="glow"></div>
-        <img src="img/logo.png" alt="" width="484" height="471" id="heroLogo">
-      </div>
-    </div>
-    <a class="scroll-cue" href="#about" aria-label="Scroll down"><span></span></a>
-  </section>
+<div class="bug-strip" id="strip" hidden></div>
 
-  <!-- TICKER -->
-  <div class="ticker" aria-hidden="true">
-    <div class="track">
-      <span>Season 8</span><i>★</i><span>Series 1</span><i>★</i><span>$200 Ultimate Bowl</span><i>★</i><span>Teams are signing</span><i>★</i><span>Free agents wanted</span><i>★</i><span>Ultimate Football</span><i>★</i>
-      <span>Season 8</span><i>★</i><span>Series 1</span><i>★</i><span>$200 Ultimate Bowl</span><i>★</i><span>Teams are signing</span><i>★</i><span>Free agents wanted</span><i>★</i><span>Ultimate Football</span><i>★</i>
-    </div>
-  </div>
-
-  <!-- STATS -->
-  <section class="stats wrap">
-    <div class="stat reveal"><b class="num" data-live="members" data-count="3806">3,806</b><span>Members</span></div>
-    <div class="stat reveal"><b class="num" data-live="online" data-count="978">978</b><span>Online now</span></div>
-    <div class="stat reveal"><b class="num accent">$<span data-count="200">200</span></b><span>Ultimate Bowl prize</span></div>
-    <div class="stat reveal"><b class="num"><span data-count="8">8</span></b><span>Seasons deep</span></div>
-  </section>
-
-  <!-- ABOUT -->
-  <section class="about wrap" id="about">
-    <div class="section-head reveal">
-      <p class="kicker">The League</p>
-      <h2>Not a pickup game.<br><span>A league.</span></h2>
-      <p class="sub">RUFL takes Ultimate Football on Roblox and gives it everything a real league has: teams with front offices, a full season, standings that matter and a championship with money on it.</p>
-    </div>
-    <div class="cards">
-      <article class="card reveal">
-        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2 3 6v6c0 5 3.8 9.4 9 10 5.2-.6 9-5 9-10V6l-9-4Z"/></svg></div>
-        <h3>Real teams</h3>
-        <p>Every team has its own owner, coaches and roster. Sign, trade and build something that lasts past one game.</p>
-      </article>
-      <article class="card reveal">
-        <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 4h16v4H4zM4 10h10v4H4zM4 16h13v4H4z"/></svg></div>
-        <h3>A full season</h3>
-        <p>Scheduled games, standings and playoffs. Every week is a chance to move up and every loss costs you.</p>
-      </article>
-      <article class="card reveal">
-        <div class="ico"><svg viewBox="0 0 24 24"><path d="M7 3h10v3h3v3a5 5 0 0 1-5 5h-.3A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 9.3 14H9a5 5 0 0 1-5-5V6h3V3Zm0 5H6v1a3 3 0 0 0 1.4 2.5A5 5 0 0 1 7 9V8Zm10 0v1a5 5 0 0 1-.4 2.5A3 3 0 0 0 18 9V8h-1Z"/></svg></div>
-        <h3>$200 on the line</h3>
-        <p>The season ends at the Ultimate Bowl. Win it and your team takes home the $200 prize and the bragging rights.</p>
-      </article>
-      <article class="card reveal">
-        <div class="ico"><svg viewBox="0 0 24 24"><path d="M16 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4ZM8 12a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm8 1c-2.7 0-8 1.3-8 4v3h16v-3c0-2.7-5.3-4-8-4ZM8 13.5c-.4 0-.9 0-1.4.1A5 5 0 0 1 9 17v3H0v-2.5C0 15.3 4.5 13.5 8 13.5Z"/></svg></div>
-        <h3>A big community</h3>
-        <p>Thousands of members, with announcements, highlights and game-day talk all in one Discord.</p>
-      </article>
-    </div>
-  </section>
-
-  <!-- SEASON -->
-  <section class="season" id="season">
-    <div class="wrap season-grid">
-      <div class="section-head reveal">
-        <p class="kicker">Season 8 · Series 1</p>
-        <h2>The road to the<br><span>Ultimate Bowl</span></h2>
-        <p class="sub">Series 1 of Season 8 is underway. Here is how a RUFL season plays out, from signing day to the final snap.</p>
-        <a class="btn btn-lg discord-link" href="https://discord.gg/Z6WvRbmyQ" target="_blank" rel="noopener">Sign up for Season 8</a>
-      </div>
-      <ol class="road">
-        <li class="reveal"><span class="step">01</span><div><h3>Sign up</h3><p>Join the Discord, get verified and put yourself on the free-agent board.</p></div></li>
-        <li class="reveal"><span class="step">02</span><div><h3>Get signed</h3><p>Front offices are always scouting. Show up, play well and teams will come to you.</p></div></li>
-        <li class="reveal"><span class="step">03</span><div><h3>Regular season</h3><p>Play your scheduled games. Every result goes into the standings.</p></div></li>
-        <li class="reveal"><span class="step">04</span><div><h3>Playoffs</h3><p>The top teams move on. One bad game and the season is over.</p></div></li>
-        <li class="reveal final"><span class="step">UB</span><div><h3>Ultimate Bowl</h3><p>Two teams, one title, $200 on the line.</p></div></li>
-      </ol>
-    </div>
-  </section>
-
-  <!-- BOWL -->
-  <section class="bowl wrap" id="bowl">
-    <div class="section-head center reveal">
-      <p class="kicker">Ultimate Bowl</p>
-      <h2>Every season ends <span>here</span></h2>
-      <p class="sub">The biggest game in RUFL, built up all season.</p>
-    </div>
-    <div class="bowl-grid">
-      <figure class="bowl-card reveal">
-        <img src="img/bowl5.jpg" alt="Ultimate Bowl V poster" loading="lazy" width="960" height="540">
-        <figcaption><b>Ultimate Bowl V</b><span>RUFL title game</span></figcaption>
-      </figure>
-      <figure class="bowl-card reveal">
-        <img src="img/bowl4.jpg" alt="Ultimate Bowl IV poster" loading="lazy" width="960" height="540">
-        <figcaption><b>Ultimate Bowl IV</b><span>Tampa Bay Buccaneers Stadium</span></figcaption>
-      </figure>
-    </div>
-    <div class="next-bowl reveal">
-      <div>
-        <p class="kicker">Up next</p>
-        <h3>Season 8's Ultimate Bowl</h3>
-        <p>Season 8's champion is decided here. Will your name be on it?</p>
-      </div>
-      <div class="prize"><span>Prize</span><b>$200</b></div>
-    </div>
-  </section>
-
-  <!-- JOIN -->
-  <section class="join wrap" id="join">
-    <div class="section-head center reveal">
-      <p class="kicker">How to Join</p>
-      <h2>Three steps to <span>game day</span></h2>
-    </div>
-    <div class="steps">
-      <div class="join-step reveal">
-        <span class="big">1</span>
-        <h3>Join the Discord</h3>
-        <p>Everything in RUFL runs through the server: signings, schedules, results and announcements.</p>
-        <a class="link discord-link" href="https://discord.gg/Z6WvRbmyQ" target="_blank" rel="noopener">discord.gg/Z6WvRbmyQ →</a>
-      </div>
-      <div class="join-step reveal">
-        <span class="big">2</span>
-        <h3>Get verified</h3>
-        <p>Link your Roblox account and pick your roles so teams can find you.</p>
-      </div>
-      <div class="join-step reveal">
-        <span class="big">3</span>
-        <h3>Get signed</h3>
-        <p>Teams are always looking for players. Hit the free-agent channel and let them know what you can do.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- FAQ -->
-  <section class="faq wrap" id="faq">
-    <div class="section-head center reveal">
-      <p class="kicker">FAQ</p>
-      <h2>Questions?</h2>
-    </div>
-    <div class="qa">
-      <details class="reveal"><summary>What game does RUFL play?</summary><p>Ultimate Football on Roblox. All league games are played there.</p></details>
-      <details class="reveal"><summary>Do I need a team to join?</summary><p>No. Join the Discord as a free agent. Teams are always looking for players, and the free-agent channel is where they look.</p></details>
-      <details class="reveal"><summary>What is the Ultimate Bowl?</summary><p>The championship game at the end of every RUFL season. This season the winning team plays for $200.</p></details>
-      <details class="reveal"><summary>Can I join in the middle of a season?</summary><p>Yes. Teams sign players during the season, so join the Discord and get on the free-agent board.</p></details>
-      <details class="reveal"><summary>Where do I find the schedule and results?</summary><p>In the Discord. Schedules, scores and announcements are all posted there.</p></details>
-    </div>
-  </section>
-
-  <!-- FINAL CTA -->
-  <section class="final">
-    <div class="final-bg" aria-hidden="true"></div>
-    <div class="wrap final-inner reveal">
-      <img src="img/logo.png" alt="RUFL logo" width="160" height="156" loading="lazy">
-      <h2>Your team is<br><span>waiting.</span></h2>
-      <p><b data-live="members">3,806</b> members are already in. Season 8 doesn't wait.</p>
-      <a class="btn btn-lg discord-link" href="https://discord.gg/Z6WvRbmyQ" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18.1a19.9 19.9 0 0 0 6 3l1.3-2.1a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2.1a19.8 19.8 0 0 0 6-3c.5-5.2-.8-9.7-3.6-13.7ZM8 15.4c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.6 8 10.6s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z"/></svg>
-        Join RUFL on Discord
-      </a>
-    </div>
-  </section>
+<main id="app" tabindex="-1">
+  <div class="boot"><img src="/img/logo.png" alt="" width="120" height="117"><span>Loading RUFL…</span></div>
 </main>
 
 <footer class="foot">
   <div class="wrap foot-inner">
-    <a class="brand" href="#top"><img src="img/logo.png" alt="" width="36" height="35"><span>RUFL</span></a>
+    <div class="foot-brand">
+      <a class="brand" href="/" data-link><img src="/img/logo.png" alt="" width="40" height="39"><span>RUFL</span></a>
+      <p>The Ultimate Football league on Roblox. Season <b class="js-season">8</b> is live.</p>
+      <a class="btn btn-sm discord-link" href="https://discord.gg/Z6WvRbmyQ" target="_blank" rel="noopener">Join the Discord</a>
+    </div>
+    <div class="foot-cols">
+      <div><h4>League</h4><a href="/scores" data-link>Scores</a><a href="/standings" data-link>Standings</a><a href="/teams" data-link>Teams</a><a href="/#bowl" data-link>Ultimate Bowl</a></div>
+      <div><h4>Stats</h4><a href="/stats" data-link>Stat leaders</a><a href="/mvp" data-link>MVP race</a><a href="/awards" data-link>Weekly awards</a><a href="/records" data-link>Record book</a></div>
+      <div><h4>Info</h4><a href="/points" data-link>How PTS work</a><a href="/rules" data-link>Rule book</a><a href="/#join" data-link>How to join</a><a href="/#faq" data-link>FAQ</a></div>
+    </div>
+  </div>
+  <div class="wrap foot-base">
     <p>RUFL is a fan-run league. It is not affiliated with Roblox or the makers of Ultimate Football.</p>
-    <p class="copy">© <span id="year">2026</span> RUFL</p>
+    <p id="updated"></p>
   </div>
 </footer>
 
-<script src="app.js"></script>
+<div class="search" id="search" hidden role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-box">
+    <div class="search-in">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      <input id="searchIn" type="search" placeholder="Search players and teams" autocomplete="off" spellcheck="false">
+      <kbd>Esc</kbd>
+    </div>
+    <div class="search-list" id="searchList"></div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
 </body>
 </html>

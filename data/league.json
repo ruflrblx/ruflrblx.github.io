@@ -1,0 +1,127 @@
+{
+ "league": {
+  "name": "RUFL",
+  "season": 8,
+  "week": 0,
+  "seasons": [
+   8
+  ],
+  "updated": 1795486605.397902,
+  "discord": "https://discord.gg/Z6WvRbmyQ"
+ },
+ "tabs": [
+  {
+   "key": "QB",
+   "label": "Passing",
+   "pos": "QB",
+   "icon": "🎯",
+   "cols": [
+    "YDS",
+    "TDS",
+    "INT",
+    "CMP%",
+    "SCK",
+    "3RD",
+    "4TH"
+   ],
+   "guide": "+1 per 25 yards, +4 TD, +0.1 per completion, +1 3rd-down conv, +2 4th-down conv; -2 INT, -2 fumble, -0.5 sacked"
+  },
+  {
+   "key": "RB",
+   "label": "Rushing",
+   "pos": "RB",
+   "icon": "🏃",
+   "cols": [
+    "YDS",
+    "Y/ATT",
+    "TD",
+    "FUM",
+    "1ST",
+    "3RD",
+    "4TH",
+    "20+"
+   ],
+   "guide": "+1 per 10 yards, +6 TD, +0.25 first down, +1 per 20+ yd run, +1 3rd-down, +2 4th-down; -2 fumble"
+  },
+  {
+   "key": "WR",
+   "label": "Receiving",
+   "pos": "WR",
+   "icon": "🙌",
+   "cols": [
+    "YDS",
+    "REC",
+    "TD",
+    "TGT",
+    "YAC",
+    "TU",
+    "1ST",
+    "3RD",
+    "4TH"
+   ],
+   "guide": "+1 per 10 yards, +6 TD, +0.5 per catch, +0.25 first down, +1 3rd-down, +2 4th-down"
+  },
+  {
+   "key": "DE",
+   "label": "D-Line",
+   "pos": "DL",
+   "icon": "💥",
+   "cols": [
+    "SCK",
+    "SCKY",
+    "TCK",
+    "TFL",
+    "QBH",
+    "PRS",
+    "SFTY",
+    "TD",
+    "RUSH"
+   ],
+   "guide": "+4 sack, +1.5 TFL, +0.75 tackle, +0.5 QB hit, +0.25 pressure, +4 safety, +6 TD"
+  },
+  {
+   "key": "DB",
+   "label": "Secondary",
+   "pos": "DB",
+   "icon": "🛡️",
+   "cols": [
+    "INT",
+    "TCK",
+    "TU",
+    "PK6",
+    "TGT",
+    "CA",
+    "CA%",
+    "YDA",
+    "TDA"
+   ],
+   "guide": "+5 INT, +6 pick six, +1 TU, +0.75 tackle, +0.5 per incompletion forced (target not caught); -1 per 33 yards allowed, -3 TD allowed"
+  },
+  {
+   "key": "K",
+   "label": "Kicking",
+   "pos": "K",
+   "icon": "🦶",
+   "cols": [
+    "M",
+    "A",
+    "%",
+    "LONG"
+   ],
+   "guide": "+3 per made field goal, -1 per miss"
+  }
+ ],
+ "teams": [],
+ "conferences": [],
+ "schedule": [],
+ "rulebook": null,
+ "games": [],
+ "leaders": {},
+ "mvp": {},
+ "awards": [],
+ "players": {},
+ "records": {
+  "game": [],
+  "season": []
+ }
+}
