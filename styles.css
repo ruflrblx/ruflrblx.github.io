@@ -617,3 +617,63 @@ a.roster-card:hover{border-color:var(--muted)}
 .rank-row .who b .pn{text-transform:none}
 .statbar{gap:0;background:var(--panel)}
 .statbar>div{box-shadow:1px 0 0 var(--line),0 1px 0 var(--line)}
+
+/* ============ NFL / CFB sections ============ */
+/* header switch */
+.lg-switch{display:flex;flex:none;margin-left:6px;border:1px solid var(--line-2);border-radius:var(--r);overflow:hidden}
+.lg-switch a{padding:8px 13px;font:900 16px/1 var(--head);letter-spacing:.06em;text-decoration:none;color:var(--muted);transition:background .15s,color .15s}
+.lg-switch a+a{border-left:1px solid var(--line-2)}
+.lg-switch a:hover{color:#fff}
+.lg-switch a.on.lgs-NFL{background:#ff7a1a;color:#140800}
+.lg-switch a.on.lgs-CFB{background:#8f5bf0;color:#fff}
+/* CFB pages switch the accent from orange to purple so it's always clear which league you're in */
+body[data-lg="CFB"]{--orange:#9b6bff;--amber:#c7aaff}
+body[data-lg="CFB"] .btn:not(.btn-line){color:#fff}
+body[data-lg="CFB"] .seg button.on,body[data-lg="CFB"] .wk.on,body[data-lg="CFB"] .g-pos,body[data-lg="CFB"] .rule-num,body[data-lg="CFB"] .tag{color:#fff}
+body[data-lg="CFB"] .wk.on small{color:#e9ddff}
+body[data-lg="NFL"] .nav::after{background:#ff7a1a}
+body[data-lg="CFB"] .nav::after{background:#8f5bf0}
+/* chooser cards */
+.lg-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.lg-card{display:flex;flex-direction:column;gap:16px;padding:22px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line);border-top:5px solid #ff7a1a;text-decoration:none;transition:border-color .15s,background .15s}
+.lg-card.lg-CFB{border-top-color:#8f5bf0}
+.lg-card:hover{background:var(--panel-2);border-color:var(--muted)}
+.lg-card.lg-NFL:hover{border-top-color:#ff7a1a}
+.lg-card.lg-CFB:hover{border-top-color:#8f5bf0}
+.lgc-top{display:flex;align-items:baseline;gap:12px}
+.lgc-top b{font:900 56px/.9 var(--head);letter-spacing:.02em;color:#ff7a1a}
+.lg-CFB .lgc-top b{color:#a77dff}
+.lgc-top span{font:700 12px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.lgc-logos{display:flex;flex-wrap:wrap;gap:8px}
+.lgc-meta{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin:0;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.lgc-meta>div{background:var(--panel);padding:10px 12px}
+.lg-card:hover .lgc-meta>div{background:var(--panel-2)}
+.lgc-meta dt{font:700 10px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.lgc-meta dd{margin:5px 0 0;font:800 16px/1.2 var(--head);text-transform:uppercase}
+.lgc-go{display:inline-flex;align-items:center;gap:6px;font:800 13px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:#ff7a1a}
+.lg-CFB .lgc-go{color:#a77dff}
+/* league home header */
+.sec-hero{padding:calc(var(--nav-h) + 3px) 0 0;background:var(--night);border-bottom:1px solid var(--line);position:relative}
+.sec-hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:8px;background:var(--hash)}
+.sec-inner{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:34px 0 30px}
+.sec-id h1{font:900 clamp(64px,10vw,120px)/.85 var(--head);letter-spacing:.02em;color:var(--orange)}
+.sec-sub{margin-top:10px;font:700 12px/1.4 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sec-logos{display:flex;flex-wrap:wrap;gap:6px;max-width:560px;justify-content:flex-end}
+.sec-logos a{display:block;padding:4px;border-radius:3px;transition:background .15s}
+.sec-logos a:hover{background:var(--panel-2)}
+body:has(.bug-strip:not([hidden])) .sec-home{margin-top:0}
+@media (max-width:1100px){.lg-switch a{padding:8px 10px;font-size:15px}}
+@media (max-width:960px){
+  .lg-switch{margin-left:auto}
+  .nav .icon-btn{margin-left:0}
+  .lg-cards{grid-template-columns:1fr}
+  .sec-logos{justify-content:flex-start}
+}
+@media (max-width:640px){
+  .brand span{font-size:22px}
+  .brand img{width:34px}
+  .lg-switch a{padding:7px 9px;font-size:14px}
+  .nav .icon-btn{display:none}
+  .lgc-top b{font-size:44px}
+  .lgc-meta{grid-template-columns:1fr}
+}

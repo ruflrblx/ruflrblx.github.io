@@ -21,7 +21,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&family=Archivo:wght@400;500;600;700;800&family=Doto:wght@700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css?v=0c812d65">
+<link rel="stylesheet" href="/styles.css?v=66e2ea0c">
 </head>
 <body class="preload">
 <a class="skip" href="#app">Skip to content</a>
@@ -31,25 +31,8 @@
     <img src="/img/logo.png" alt="" width="44" height="43">
     <span>RUFL<small>Season <b class="js-season">8</b></small></span>
   </a>
-  <nav class="links" id="links" aria-label="Main">
-    <a href="/" data-link data-sec="home">Home</a>
-    <a href="/scores" data-link data-sec="scores">Scores</a>
-    <a href="/standings" data-link data-sec="standings">Standings</a>
-    <a href="/stats" data-link data-sec="stats">Stats</a>
-    <a href="/teams" data-link data-sec="teams">Teams</a>
-    <a href="/mvp" data-link data-sec="mvp">MVP Race</a>
-    <div class="more">
-      <button class="more-btn" id="moreBtn" aria-expanded="false" aria-haspopup="true" data-sec="more">More <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-      <div class="more-menu" id="moreMenu">
-        <a href="/awards" data-link data-sec="awards">Weekly awards</a>
-        <a href="/records" data-link data-sec="records">Record book</a>
-        <a href="/points" data-link data-sec="points">How PTS work</a>
-        <a href="/rules" data-link data-sec="rules">Rule book</a>
-        <a href="/#bowl" data-link>Ultimate Bowl</a>
-        <a href="/#join" data-link>How to join</a>
-      </div>
-    </div>
-  </nav>
+  <div class="lg-switch" id="lgSwitch" aria-label="League"><a href="/nfl" data-link class="lgs-NFL">NFL</a><a href="/cfb" data-link class="lgs-CFB">CFB</a></div>
+  <nav class="links" id="links" aria-label="Main"></nav>
   <button class="icon-btn" id="searchBtn" aria-label="Search players and teams" title="Search ( / )">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
   </button>
@@ -74,9 +57,9 @@
       <a class="btn btn-sm discord-link" href="https://discord.gg/Z6WvRbmyQ" target="_blank" rel="noopener">Join the Discord</a>
     </div>
     <div class="foot-cols">
-      <div><h4>League</h4><a href="/scores" data-link>Scores</a><a href="/standings" data-link>Standings</a><a href="/teams" data-link>Teams</a><a href="/#bowl" data-link>Ultimate Bowl</a></div>
-      <div><h4>Stats</h4><a href="/stats" data-link>Stat leaders</a><a href="/mvp" data-link>MVP race</a><a href="/awards" data-link>Weekly awards</a><a href="/records" data-link>Record book</a></div>
-      <div><h4>Info</h4><a href="/points" data-link>How PTS work</a><a href="/rules" data-link>Rule book</a><a href="/#join" data-link>How to join</a><a href="/#faq" data-link>FAQ</a></div>
+      <div><h4>NFL</h4><a href="/nfl" data-link>NFL home</a><a href="/nfl/scores" data-link>Scores</a><a href="/nfl/standings" data-link>Standings</a><a href="/nfl/stats" data-link>Stats</a><a href="/nfl/teams" data-link>Teams</a><a href="/nfl/mvp" data-link>MVP race</a></div>
+      <div><h4>CFB</h4><a href="/cfb" data-link>CFB home</a><a href="/cfb/scores" data-link>Scores</a><a href="/cfb/standings" data-link>Standings</a><a href="/cfb/stats" data-link>Stats</a><a href="/cfb/teams" data-link>Teams</a><a href="/cfb/heisman" data-link>Heisman race</a></div>
+      <div><h4>RUFL</h4><a href="/awards" data-link>Weekly awards</a><a href="/records" data-link>Record book</a><a href="/points" data-link>How PTS work</a><a href="/#join" data-link>How to join</a><a href="/#bowl" data-link>Ultimate Bowl</a><a href="/#faq" data-link>FAQ</a></div>
     </div>
   </div>
   <div class="wrap foot-base">
@@ -96,6 +79,6 @@
   </div>
 </div>
 
-<script src="/app.js?v=9e2df187"></script>
+<script src="/app.js?v=96f47cc9"></script>
 </body>
 </html>

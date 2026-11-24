@@ -51,8 +51,13 @@
     if (loose.length && (all || !state.lg)) groups.push({ lg: null, confs: loose });
     return groups;
   }
-  const lgBanner = (l) => (l ? `<div class="lg-banner lg-${esc(l.key)}"><b>${esc(l.name)}</b><span>${esc(l.full)}</span></div>` : "");
+  const race = (k) => { const l = leagues().find((x) => x.key === k) || {}; const label = l.race || (k === "CFB" ? "Heisman" : "MVP"); return { label, slug: label.toLowerCase() }; };
+  const sec = (path = "") => (state.lg ? `/${state.lg.toLowerCase()}${path}` : path || "/");
+  const lgObj = (k) => leagues().find((l) => l.key === k) || { key: k, name: k, full: k };
+  const lgBanner = (l) => (l && !state.lg ? `<div class="lg-banner lg-${esc(l.key)}"><b>${esc(l.name)}</b><span>${esc(l.full)}</span></div>` : "");
+  const lgSegOff = true;
   function lgSeg() {
+    if (lgSegOff) return "";
     const L = leagues();
     if (L.length < 2) return "";
     const cur = state.lg || "";
@@ -99,7 +104,8 @@
   const form = (s) => `<span class="form">${[...(s || "")].map((c) => `<i class="${c}" title="${c === "W" ? "Win" : c === "L" ? "Loss" : "Tie"}">${c}</i>`).join("")}</span>`;
   const page = (html, cls = "") => `<div class="page ${cls}">${html}</div>`;
   function head(kick, title, extra = "") {
-    return `<header class="pagehead"><div><p class="kicker">${kick}</p><h1>${title}</h1></div>${extra}</header>`;
+    const k = state.lg ? `${esc(lgObj(state.lg).name)} · ${kick}` : kick;
+    return `<header class="pagehead"><div><p class="kicker">${k}</p><h1>${title}</h1></div>${extra}</header>`;
   }
   function empty(title, text, opts = {}) {
     return `<div class="empty"><h3>${esc(title)}</h3><p>${esc(text)}</p>
@@ -142,11 +148,14 @@
     const up = $("#updated");
     if (up) up.textContent = D.league.updated && hasGames() ? `Stats updated ${ago(D.league.updated)}` : "";
     $$('[data-sec="rules"]').forEach((a) => (a.hidden = !(D.rulebook && D.rulebook.articles && D.rulebook.articles.length)));
-    // score bug strip
+    renderStrip();
+    if (D.league.demo && !$(".demo-flag")) document.body.insertAdjacentHTML("beforeend", `<div class="demo-flag">Demo data · preview only</div>`);
+  }
+  function renderStrip() {
     const strip = $("#strip");
-    const fin = D.games.filter(scored).slice(0, 14);
+    const fin = D.games.filter((g) => scored(g) && inLg(g.home || g.away)).slice(0, 14);
     strip.hidden = !fin.length;
-    strip.innerHTML = fin.length ? `<span class="strip-label">Finals</span><div class="strip-track">${fin.map((g) => {
+    strip.innerHTML = fin.length ? `<span class="strip-label">${state.lg ? esc(lgObj(state.lg).name) + " " : ""}Finals</span><div class="strip-track">${fin.map((g) => {
       const hw = g.hs > g.as, aw = g.as > g.hs;
       return `<a class="bug" href="${gameHref(g.id)}" data-link>
         <span class="bug-wk">${esc(String(g.week || "").replace("Week ", "WK "))}</span>
@@ -154,7 +163,6 @@
         <span class="bug-row ${hw ? "w" : ""}">${mark(g.home, "xs")}<b>${esc((teamBy(g.home) || {}).abbr || abbr(g.home))}</b><em>${g.hs}</em></span>
       </a>`;
     }).join("")}</div>` : "";
-    if (D.league.demo && !$(".demo-flag")) document.body.insertAdjacentHTML("beforeend", `<div class="demo-flag">Demo data · preview only</div>`);
   }
 
   // ---------------------------------------------------------------- shared blocks
@@ -192,7 +200,7 @@
     const top = rows[0];
     if (!top) return "";
     const tm = teamBy(top.team);
-    return `<a class="lcard reveal" href="/stats/${t.key.toLowerCase()}" data-link style="--tc:${esc((tm && tm.color) || "#8b3dff")}">
+    return `<a class="lcard reveal" href="${sec(`/stats/${t.key.toLowerCase()}`)}" data-link style="--tc:${esc((tm && tm.color) || "#8b3dff")}">
       <div class="lc-top"><span class="lc-cat">${esc(t.label)}</span><span class="lc-pos">${esc(t.pos)}</span></div>
       <div class="lc-who">${hs(top.key, top.player, "lg")}<div><b>${esc(top.player)}</b><small>${top.team ? esc(top.team) : "Free agent"}</small></div></div>
       <div class="lc-stat"><span class="lc-v">${esc(top.cols[0])}</span><span class="lc-u">${esc(t.cols[0])}</span><span class="lc-pts">${fmt(top.pts)} <small>PTS</small></span></div>
@@ -217,61 +225,12 @@
   const legend = () => `<div class="legend">${D.tabs.map((t) => `<span><i class="c-${t.key}"></i>${esc(t.label)}</span>`).join("")}</div>`;
 
   // ---------------------------------------------------------------- HOME
-  function homePage() {
-    const L = D.league, s = season();
-    const games = D.games.filter((g) => String(g.season) === s);
-    const latest = games.find(scored);
-    const board = D.leaders[s] || {};
-    const mv = D.mvp[s] || [];
-    const power = D.teams.filter((t) => t.prank).sort((a, b) => a.prank - b.prank).slice(0, 5);
-    const wk = pickWeek();
-    const LG = leagues();
-
-    const hero = `<section class="hero">
-      <div class="hero-media" id="heroBg" aria-hidden="true"></div>
-      <div class="wrap hero-inner">
-        <p class="hero-tag"><img src="/img/logo.png" alt="" width="34" height="33">Season ${esc(L.season)} · ${hasGames() && L.week ? `Week ${esc(L.week)}` : "Series 1"}</p>
-        <h1>Ultimate Football League</h1>
-        <p class="hero-sub">${LG.length > 1 ? `${LG.map((l) => esc(l.name)).join(" and ")} leagues` : "A competitive league"} on Roblox's Ultimate Football, with full schedules, tracked stats and a $200 Ultimate Bowl.</p>
-        <div class="hero-cta">
-          <a class="btn discord-link" href="${esc(invite())}" target="_blank" rel="noopener">${DC}Join the Discord</a>
-          <a class="btn btn-line" href="${hasGames() ? "/scores" : "/teams"}" data-link>${hasGames() ? "Scores" : "Teams"}</a>
-        </div>
-      </div>
-      <div class="hero-facts"><div class="wrap">
-        <div><b data-live="members">3,800+</b><span>Members</span></div>
-        <div><b data-live="online">–</b><span>Online now</span></div>
-        <div><b>${D.teams.length || "–"}</b><span>Teams</span></div>
-        <div><b>$200</b><span>Ultimate Bowl</span></div>
-      </div></div>
-    </section>`;
-
-    let main = "";
-    if (latest) {
-      const list = wk ? wk.matchups : games.slice(0, 8);
-      main += `<section class="blk">${sh(esc(wk ? wk.week : "Latest scores"), ["/scores", "All scores"])}
-        <div class="mg-grid">${list.map(miniGame).join("")}</div></section>`;
-      if (Object.keys(board).length) main += `<section class="blk">${sh("Stat leaders", ["/stats", "All stats"])}<div class="lgrid">${D.tabs.map((t) => leaderCard(t, board[t.key] || [])).join("")}</div></section>`;
-      const groups = byLeague(confList(), true);
-      if (groups.length) main += `<section class="blk">${sh("Standings", ["/standings", "Full standings"])}${groups.map((g) => `${lgBanner(g.lg)}<div class="st-grid">${g.confs.map((c) => `<div class="card st-card"><div class="st-head"><h3>${esc(c.name)}</h3></div>${standingsTable(c.teams, { compact: true, conf: true })}</div>`).join("")}</div>`).join("")}</section>`;
-      const rankRow = (href, rk, pic, name, sub, val, unit) => `<a class="rank-row" href="${href}" data-link><span class="rk">${rk}</span>${pic}<span class="who"><b>${name}</b><small>${sub}</small></span><span class="val">${val}${unit ? `<small>${unit}</small>` : ""}</span></a>`;
-      if (mv.length || power.length) main += `<section class="blk two">
-        ${mv.length ? `<div>${sh("MVP race", ["/mvp", "Full race"])}<div class="card list">${mv.slice(0, 5).map((e, i) => rankRow(playerHref(e.key), i + 1, hs(e.key, e.player, "sm"), `<span class="pn">${esc(e.player)}</span>`, esc(e.team || "Free agent"), fmt(e.pts), "PTS")).join("")}</div></div>` : ""}
-        ${power.length ? `<div>${sh("Power rankings", ["/standings?view=power", "All"])}<div class="card list">${power.map((t) => rankRow(`/team/${t.id}`, t.prank, mark(t.name, "sm"), esc(t.name), `${recOf(t)} · ${diffTxt(t.diff)}`, move(t.move), "")).join("")}</div></div>` : ""}
-      </section>`;
-      if (D.awards.length) main += `<section class="blk">${sh("Player of the week", ["/awards", "All awards"], esc(D.awards[0].week))}${awardCard(D.awards[0])}</section>`;
-    } else {
-      main += `<section class="blk">${sh(`Season ${esc(s)} teams`, ["/teams", "All teams"])}
-        <p class="blk-note">Scores, standings and stats appear here once Season ${esc(s)} games are posted.</p>
-        ${teamDirectory()}</section>`;
-    }
-
-    const info = `
+  const infoBlocks = (L, LG) => `
     <section class="blk info" id="about">
       <div class="info-text">
         ${sh("About RUFL")}
         <p>RUFL is a fan-run football league played on Ultimate Football on Roblox. Teams have owners and coaching staffs, sign players, and play a scheduled season that ends with the Ultimate Bowl.</p>
-        <p>Season ${esc(L.season)} runs ${LG.length > 1 ? `two leagues: ${LG.map((l) => `<b>${esc(l.full)}</b>`).join(" and ")}` : "one league"}, ${D.teams.length ? `${D.teams.length} teams in total` : "with teams announced in the Discord"}. Everything is organised in the RUFL Discord.</p>
+        <p>Season ${esc(L.season)} runs ${LG.length > 1 ? `two separate leagues: ${LG.map((l) => `<b>${esc(l.full)}</b>`).join(" and ")}` : "one league"}${D.teams.length ? `, ${D.teams.length} teams in total` : ""}. Everything is organised in the RUFL Discord.</p>
       </div>
       <ol class="steps" id="join">
         <li><b>Join the Discord</b><span>Signings, schedules, results and announcements are all posted there.</span></li>
@@ -289,20 +248,90 @@
     <section class="blk" id="faq">${sh("FAQ")}
       <div class="qa">
         <details><summary>What game does RUFL play?</summary><p>Ultimate Football on Roblox. All league games are played there.</p></details>
+        <details><summary>What's the difference between NFL and CFB?</summary><p>They're two separate RUFL leagues with their own teams, conferences, standings and stats. NFL crowns an MVP; CFB has a Heisman race. Use the NFL / CFB switch at the top to move between them.</p></details>
         <details><summary>Do I need a team to join?</summary><p>No. Join the Discord as a free agent. Teams sign players from the free-agency channel all season.</p></details>
         <details><summary>What is the Ultimate Bowl?</summary><p>The championship game at the end of every RUFL season. This season the winning team plays for $200.</p></details>
         <details><summary>Where do the stats on this site come from?</summary><p>From the stat sheets of official RUFL games. Scores, standings, leaders and player pages update after each game is posted.</p></details>
       </div>
     </section>`;
+  const ctaBand = (L) => `<section class="cta-band"><div class="wrap"><div><h2>Play in RUFL</h2><p><b data-live="members">3,800+</b> members. Teams are signing players for Season ${esc(L.season)}.</p></div>
+        <a class="btn discord-link" href="${esc(invite())}" target="_blank" rel="noopener">${DC}Join the Discord</a></div></section>`;
 
-    return `<div class="home">${hero}<div class="wrap home-body">${main}${info}</div>
-      <section class="cta-band"><div class="wrap"><div><h2>Play in RUFL</h2><p><b data-live="members">3,800+</b> members. Teams are signing players for Season ${esc(L.season)}.</p></div>
-        <a class="btn discord-link" href="${esc(invite())}" target="_blank" rel="noopener">${DC}Join the Discord</a></div></section></div>`;
+  // "/" : pick a league
+  function chooserPage() {
+    const L = D.league, LG = leagues();
+    const hero = `<section class="hero">
+      <div class="hero-media" aria-hidden="true"></div>
+      <div class="wrap hero-inner">
+        <p class="hero-tag"><img src="/img/logo.png" alt="" width="34" height="33">Season ${esc(L.season)} · Series 1</p>
+        <h1>Ultimate Football League</h1>
+        <p class="hero-sub">${LG.length > 1 ? `Two leagues, ${LG.map((l) => esc(l.name)).join(" and ")},` : "A competitive league"} on Roblox's Ultimate Football, with full schedules, tracked stats and a $200 Ultimate Bowl.</p>
+        <div class="hero-cta">
+          ${LG.map((l, i) => `<a class="btn ${i ? "btn-line" : ""}" href="/${l.key.toLowerCase()}" data-link>${esc(l.name)} league ${ARW}</a>`).join("")}
+          <a class="btn btn-line discord-link" href="${esc(invite())}" target="_blank" rel="noopener">${DC}Discord</a>
+        </div>
+      </div>
+      <div class="hero-facts"><div class="wrap">
+        <div><b data-live="members">3,800+</b><span>Members</span></div>
+        <div><b data-live="online">–</b><span>Online now</span></div>
+        <div><b>${D.teams.length || "–"}</b><span>Teams</span></div>
+        <div><b>$200</b><span>Ultimate Bowl</span></div>
+      </div></div>
+    </section>`;
+    const cards = LG.map((l) => {
+      const ts = D.teams.filter((t) => leagueOf(t.name) === l.key);
+      const cf = D.conferences.filter((c) => c.league === l.key).map((c) => c.name);
+      const g = D.games.filter((x) => String(x.season) === season() && scored(x) && leagueOf(x.home || x.away) === l.key).length;
+      return `<a class="lg-card lg-${esc(l.key)}" href="/${l.key.toLowerCase()}" data-link>
+        <div class="lgc-top"><b>${esc(l.name)}</b><span>${esc(l.full)}</span></div>
+        <div class="lgc-logos">${ts.map((t) => mark(t.name, "sm")).join("")}</div>
+        <dl class="lgc-meta"><div><dt>Teams</dt><dd>${ts.length}</dd></div><div><dt>Conferences</dt><dd>${cf.map(esc).join(" · ") || "–"}</dd></div><div><dt>Award race</dt><dd>${race(l.key).label}</dd></div><div><dt>Games played</dt><dd>${g}</dd></div></dl>
+        <span class="lgc-go">Go to ${esc(l.name)} ${ARW}</span></a>`;
+    }).join("");
+    return `<div class="home">${hero}<div class="wrap home-body">
+      <section class="blk" id="leagues">${sh("Choose a league")}<div class="lg-cards">${cards}</div></section>
+      ${infoBlocks(L, LG)}</div>${ctaBand(L)}</div>`;
+  }
+
+  // "/nfl", "/cfb" : that league's home
+  function sectionHome() {
+    const L = D.league, s = season(), k = state.lg, lo = lgObj(k), r = race(k);
+    const games = D.games.filter((g) => String(g.season) === s && inLg(g.home || g.away));
+    const latest = games.find(scored);
+    const board = D.leaders[s] || {};
+    const mv = (D.mvp[s] || []).filter((e) => inLg(e.team));
+    const power = D.teams.filter((t) => t.prank && inLg(t.name)).sort((a, b) => a.prank - b.prank).slice(0, 5);
+    const wk = pickWeek();
+    const wkGames = wk ? wk.matchups.filter((m) => inLg(m.home || m.away)) : [];
+    const teams = D.teams.filter((t) => inLg(t.name));
+    const confs = D.conferences.filter((c) => c.league === k);
+    const top = `<section class="sec-hero lg-${esc(k)}"><div class="wrap sec-inner">
+        <div class="sec-id"><p class="kicker">RUFL · Season ${esc(s)}</p><h1>${esc(lo.name)}</h1><p class="sec-sub">${esc(lo.full)} · ${teams.length} teams${confs.length ? " · " + confs.map((c) => esc(c.name)).join(" · ") : ""}</p></div>
+        <div class="sec-logos">${teams.map((t) => `<a href="/team/${t.id}" data-link title="${esc(t.name)}">${mark(t.name, "sm")}</a>`).join("")}</div>
+      </div></section>`;
+    const rankRow = (href, rk, pic, name, sub, val, unit) => `<a class="rank-row" href="${href}" data-link><span class="rk">${rk}</span>${pic}<span class="who"><b>${name}</b><small>${sub}</small></span><span class="val">${val}${unit ? `<small>${unit}</small>` : ""}</span></a>`;
+    let main = "";
+    if (latest) {
+      const list = wkGames.length ? wkGames : games.slice(0, 8);
+      main += `<section class="blk">${sh(esc(wkGames.length ? wk.week : "Latest scores"), [sec("/scores"), "All scores"])}<div class="mg-grid">${list.map(miniGame).join("")}</div></section>`;
+      if (Object.keys(board).length) main += `<section class="blk">${sh("Stat leaders", [sec("/stats"), "All stats"])}<div class="lgrid">${D.tabs.map((t) => leaderCard(t, (board[t.key] || []).filter((x) => inLg(x.team)))).join("")}</div></section>`;
+      const groups = byLeague(confList());
+      if (groups.length) main += `<section class="blk">${sh("Standings", [sec("/standings"), "Full standings"])}${groups.map((g) => `<div class="st-grid">${g.confs.map((c) => `<div class="card st-card"><div class="st-head"><h3>${esc(c.name)}</h3></div>${standingsTable(c.teams, { compact: true, conf: true })}</div>`).join("")}</div>`).join("")}</section>`;
+      if (mv.length || power.length) main += `<section class="blk two">
+        ${mv.length ? `<div>${sh(`${r.label} race`, [sec("/" + r.slug), "Full race"])}<div class="card list">${mv.slice(0, 5).map((e, i) => rankRow(playerHref(e.key), i + 1, hs(e.key, e.player, "sm"), `<span class="pn">${esc(e.player)}</span>`, esc(e.team || "Free agent"), fmt(e.pts), "PTS")).join("")}</div></div>` : ""}
+        ${power.length ? `<div>${sh("Power rankings", [sec("/standings?view=power"), "All"])}<div class="card list">${power.map((t, i) => rankRow(`/team/${t.id}`, i + 1, mark(t.name, "sm"), esc(t.name), `${recOf(t)} · ${diffTxt(t.diff)}`, move(t.move), "")).join("")}</div></div>` : ""}
+      </section>`;
+    } else {
+      main += `<section class="blk">${sh(`${esc(lo.name)} teams`, [sec("/teams"), "All teams"])}
+        <p class="blk-note">${esc(lo.name)} scores, standings, stats and the ${esc(r.label)} race appear here once Season ${esc(s)} games are posted.</p>
+        ${teamDirectory()}</section>`;
+    }
+    return `<div class="home sec-home">${top}<div class="wrap home-body">${main}</div></div>`;
   }
 
   // every team, grouped by league and conference (pre-season home)
   function teamDirectory() {
-    const groups = byLeague(confList(), true);
+    const groups = byLeague(confList());
     if (!groups.length) return D.teams.length ? `<div class="dir-grid">${D.teams.map(dirTeam).join("")}</div>` : empty("Teams coming soon", "Team pages appear here once the season's teams are set.");
     return `<div class="dir">${groups.map((g) => `<div class="dir-lg">${lgBanner(g.lg)}<div class="dir-confs">${g.confs.map((c) => `<div class="card dir-conf"><h3>${esc(c.name)}</h3>${c.teams.map(dirTeam).join("")}</div>`).join("")}</div></div>`).join("")}</div>`;
   }
@@ -369,7 +398,7 @@
     const teams = [g.away, g.home].filter(Boolean);
     const p = g.potg;
     return page(`
-      <a class="crumb" href="/scores" data-link>${BACK} Scores</a>
+      <a class="crumb" href="${sec("/scores")}" data-link>${BACK} Scores</a>
       <section class="game-hero reveal" style="--ac:${esc((teamBy(g.away) || {}).color || "#8b3dff")};--hc:${esc((teamBy(g.home) || {}).color || "#ff7a18")}">
         ${scoreboard(g, true)}
         ${g.recap || p ? `<div class="game-foot">${g.recap ? `<p>${esc(g.recap)}</p>` : "<p></p>"}
@@ -433,13 +462,13 @@
     const s = opts.includes(ask) ? ask : season();
     const rows = ((D.leaders[s] || {})[t.key] || []).filter((r) => inLg(r.team)).map((r, i) => ({ ...r, rank: i + 1 }));
     const q = s !== season() ? `?season=${s}` : "";
-    const tabsNav = `<nav class="pills" aria-label="Stat categories">${D.tabs.map((x) => `<a class="${x.key === t.key ? "on" : ""}" href="/stats/${x.key.toLowerCase()}${q}" data-link><b>${esc(x.pos)}</b><span>${esc(x.label)}</span></a>`).join("")}</nav>`;
+    const tabsNav = `<nav class="pills" aria-label="Stat categories">${D.tabs.map((x) => `<a class="${x.key === t.key ? "on" : ""}" href="${sec(`/stats/${x.key.toLowerCase()}`)}${q}" data-link><b>${esc(x.pos)}</b><span>${esc(x.label)}</span></a>`).join("")}</nav>`;
     const seasonSel = opts.length > 1 ? `<label class="sel"><span>Season</span><select id="seasonSel">${opts.map((o) => `<option value="${o}" ${o === s ? "selected" : ""}>${o === "all" ? "All time" : "Season " + o}</option>`).join("")}</select></label>` : "";
     const top3 = rows.slice(0, 3);
     setTimeout(() => {
       const draw = () => drawStatTable(t, rows, ($("#statSearch")?.value || "").toLowerCase());
       $("#statSearch")?.addEventListener("input", draw);
-      $("#seasonSel")?.addEventListener("change", (e) => go(`/stats/${t.key.toLowerCase()}${e.target.value === season() ? "" : "?season=" + e.target.value}`));
+      $("#seasonSel")?.addEventListener("change", (e) => go(`${sec(`/stats/${t.key.toLowerCase()}`)}${e.target.value === season() ? "" : "?season=" + e.target.value}`));
       draw();
     });
     return page(`${head(s === "all" ? "All time" : `Season ${esc(s)}`, `${esc(t.label)} <span>leaders</span>`, tools(lgSeg(), seasonSel))}
@@ -510,7 +539,7 @@
     const ranks = Object.entries(t.ranks || {});
     const lt = lum(t.color) > 0.6;
     return page(`
-      <a class="crumb" href="/teams" data-link>${BACK} Teams</a>
+      <a class="crumb" href="${sec("/teams")}" data-link>${BACK} Teams</a>
       <section class="ent-hero reveal ${lt ? "lt" : ""}" style="--tc:${esc(t.color || "#6b4bb3")}">
         <span class="ent-ghost" aria-hidden="true">${esc(t.abbr || abbr(t.name))}</span>
         ${mark(t.name, "xxl")}
@@ -559,7 +588,7 @@
     const curPts = Math.round(Object.values(cur).reduce((a, x) => a + x.pts, 0) * 10) / 10;
     const c = (t && t.color) || "#6b4bb3";
     return page(`
-      <a class="crumb" href="/stats" data-link>${BACK} Stat leaders</a>
+      <a class="crumb" href="${sec("/stats")}" data-link>${BACK} Stat leaders</a>
       <section class="ent-hero player reveal ${lum(c) > 0.6 ? "lt" : ""}" style="--tc:${esc(c)}">
         <span class="ent-ghost" aria-hidden="true">${esc(tabsHere.map((x) => x.pos).join(" ") || "RUFL")}</span>
         ${hs(key, p.name, "xxl")}
@@ -568,7 +597,7 @@
       </section>
       <div class="statbar reveal">
         <div><b>${p.gp}</b><span>Games</span></div>
-        ${p.mvp_rank ? `<div><b>${ord(p.mvp_rank)}</b><span>MVP race</span></div>` : ""}
+        ${p.mvp_rank ? `<div><b>${ord(p.mvp_rank)}</b><span>${race(leagueOf(p.team) || state.lg).label} race</span></div>` : ""}
         ${Object.entries(p.ranks || {}).map(([k, [r, n]]) => `<div><b>${ord(r)}</b><span>${esc((tab(k) || {}).label || k)}</span><em>of ${n}</em></div>`).join("")}
         <div><b>${fmt(p.pts)}</b><span>Career PTS</span></div>
       </div>
@@ -597,9 +626,9 @@
   function mvpPage() {
     const s = season();
     const rows = (D.mvp[s] || []).filter((r) => inLg(r.team));
-    return page(`${head(`Season ${esc(s)}`, "MVP <span>race</span>", tools(lgSeg()))}
+    return page(`${head(`Season ${esc(s)}`, `${race(state.lg).label} <span>race</span>`, tools(lgSeg()))}
       ${rows.length ? `${legend()}<div class="mvp-list">${mvpRows(rows, 50)}</div><p class="note">Total PTS across every position a player has stats at. The bar shows where the points come from.</p>`
-        : empty("The race hasn't started", "The MVP race ranks every player by total PTS once games are posted.")}`);
+        : empty("The race hasn't started", `The ${race(state.lg).label} race ranks every player by total PTS once games are posted.`)}`);
   }
   function awardCard(a) {
     return `<section class="card award reveal">
@@ -656,25 +685,88 @@
   }
 
   // ---------------------------------------------------------------- router
+  const SECTION_RE = /^\/(nfl|cfb)(\/.*)?$/;
   const routes = [
-    [/^\/$/, homePage, "home"],
-    [/^\/scores\/?$/, scoresPage, "scores"],
+    [/^\/$/, chooserPage, "home"],
+    [/^\/(nfl|cfb)\/?$/, sectionHome, "home"],
+    [/^\/(nfl|cfb)\/scores\/?$/, scoresPage, "scores"],
+    [/^\/(nfl|cfb)\/(standings|rankings)\/?$/, standingsPage, "standings"],
+    [/^\/(nfl|cfb)\/stats\/?$/, () => statsPage(D.tabs[0] && D.tabs[0].key), "stats"],
+    [/^\/(nfl|cfb)\/stats\/([a-z]+)\/?$/, (m) => statsPage(m[2]), "stats"],
+    [/^\/(nfl|cfb)\/teams\/?$/, teamsPage, "teams"],
+    [/^\/(nfl|cfb)\/(mvp|heisman|race)\/?$/, mvpPage, "race"],
     [/^\/game\/(\d+)\/?$/, (m) => gamePage(m[1]), "scores"],
-    [/^\/(standings|rankings)\/?$/, standingsPage, "standings"],
-    [/^\/stats\/?$/, () => statsPage(D.tabs[0] && D.tabs[0].key), "stats"],
-    [/^\/stats\/([a-z]+)\/?$/, (m) => statsPage(m[1]), "stats"],
-    [/^\/player\/([^/]+)\/?$/, (m) => playerPage(m[1]), "stats"],
-    [/^\/teams\/?$/, teamsPage, "teams"],
     [/^\/team\/([^/]+)\/?$/, (m) => teamPage(m[1]), "teams"],
-    [/^\/(mvp|heisman)\/?$/, mvpPage, "mvp"],
+    [/^\/player\/([^/]+)\/?$/, (m) => playerPage(m[1]), "stats"],
     [/^\/awards\/?$/, awardsPage, "awards"],
     [/^\/records\/?$/, recordsPage, "records"],
     [/^\/points\/?$/, pointsPage, "points"],
     [/^\/(rules|rulebook)\/?$/, rulesPage, "rules"],
   ];
+  const lastLg = () => { try { return localStorage.getItem("rufl-lg"); } catch (e) { return null; } };
+  // which league a page belongs to: from the URL, or from the team/player/game it shows
+  function routeLeague(path) {
+    const m = path.match(SECTION_RE);
+    if (m) return m[1].toUpperCase();
+    let x;
+    if ((x = path.match(/^\/team\/([^/]+)/))) { const t = teamById(decodeURIComponent(x[1])); return t ? leagueOf(t.name) : null; }
+    if ((x = path.match(/^\/player\/([^/]+)/))) { const pl = D.players[decodeURIComponent(x[1])]; return pl ? leagueOf(pl.team) : null; }
+    if ((x = path.match(/^\/game\/(\d+)/))) { const g = D.games.find((y) => String(y.id) === x[1]); return g ? leagueOf(g.home || g.away) : null; }
+    return null;
+  }
+  // old links (/scores, /standings, /mvp ...) go to the same tab in the last-used league
+  function legacyRedirect() {
+    const m = location.pathname.match(/^\/(scores|standings|rankings|stats(?:\/[a-z]+)?|teams|mvp|heisman)\/?$/);
+    if (!m || leagues().length < 1) return false;
+    const k = (lastLg() || (leagues()[0] || {}).key || "NFL").toLowerCase();
+    let rest = m[1];
+    if (rest === "mvp" || rest === "heisman") rest = race(k.toUpperCase()).slug;
+    history.replaceState({}, "", `/${k}/${rest}${location.search}`);
+    return true;
+  }
+  // the same tab in the other league
+  function switchHref(k) {
+    const kl = k.toLowerCase(), m = location.pathname.match(SECTION_RE);
+    if (!m) return `/${kl}`;
+    let rest = m[2] || "";
+    if (/^\/(mvp|heisman|race)\/?$/.test(rest)) rest = "/" + race(k).slug;
+    return `/${kl}${rest}${/standings/.test(rest) ? location.search : ""}`;
+  }
+  function renderNav() {
+    const L = leagues();
+    const sw = $("#lgSwitch");
+    if (sw) sw.innerHTML = L.length > 1 ? L.map((l) => `<a class="${l.key === state.lg ? "on" : ""} lgs-${esc(l.key)}" href="${switchHref(l.key)}" data-link aria-current="${l.key === state.lg ? "true" : "false"}">${esc(l.name)}</a>`).join("") : "";
+    let items;
+    if (state.lg) {
+      const b = "/" + state.lg.toLowerCase(), r = race(state.lg);
+      items = [[b, `${esc(lgObj(state.lg).name)} Home`, "home"], [b + "/scores", "Scores", "scores"], [b + "/standings", "Standings", "standings"], [b + "/stats", "Stats", "stats"], [b + "/teams", "Teams", "teams"], [b + "/" + r.slug, `${esc(r.label)} Race`, "race"]];
+    } else {
+      items = [["/", "Home", "home"], ...L.map((l) => [`/${l.key.toLowerCase()}`, `${esc(l.name)} League`, "lg-" + l.key])];
+    }
+    const hasRules = !!(D.rulebook && D.rulebook.articles && D.rulebook.articles.length);
+    links.innerHTML = items.map(([h, t, k]) => `<a href="${h}" data-link data-sec="${k}">${t}</a>`).join("") + `
+      <div class="more">
+        <button class="more-btn" id="moreBtn" aria-expanded="false" aria-haspopup="true" data-sec="more">More <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="more-menu">
+          ${state.lg ? `<a href="/" data-link>All leagues</a>` : ""}
+          <a href="/awards" data-link data-sec="awards">Weekly awards</a>
+          <a href="/records" data-link data-sec="records">Record book</a>
+          <a href="/points" data-link data-sec="points">How PTS work</a>
+          ${hasRules ? `<a href="/rules" data-link data-sec="rules">Rule book</a>` : ""}
+          <a href="/#bowl" data-link>Ultimate Bowl</a>
+          <a href="/#join" data-link>How to join</a>
+        </div>
+      </div>`;
+  }
   let section = null;
   function render(keepScroll) {
     if (!D) return;
+    legacyRedirect();
+    state.lg = routeLeague(location.pathname);
+    if (state.lg) { try { localStorage.setItem("rufl-lg", state.lg); } catch (e) {} }
+    document.body.dataset.lg = state.lg || "";
+    renderNav();
+    renderStrip();
     let html = null; section = null;
     for (const [re, fn, sec] of routes) {
       const m = location.pathname.match(re);
@@ -688,7 +780,8 @@
     setNav(section);
     afterRender();
     const h = $(".pagehead h1");
-    document.title = h && section !== "home" ? `${h.textContent.trim().replace(/\s+/g, " ")} · RUFL` : "RUFL · Ultimate Football League";
+    const lgName = state.lg ? lgObj(state.lg).name : "";
+    document.title = h && section !== "home" ? `${h.textContent.trim().replace(/\s+/g, " ")} · ${lgName ? lgName + " · " : ""}RUFL` : lgName ? `${lgName} · RUFL` : "RUFL · Ultimate Football League";
   }
   function go(href) {
     const u = new URL(href, location.origin);
@@ -724,7 +817,7 @@
     $$("tr[data-href]", app).forEach((tr) => tr.addEventListener("click", (e) => { if (!e.target.closest("a")) go(tr.dataset.href); }));
     // week / view switches
     $$("[data-week]", app).forEach((b) => b.addEventListener("click", () => { state.week = b.dataset.week; render(true); }));
-    $$("[data-view]", app).forEach((b) => b.addEventListener("click", () => { state.view = b.dataset.view; history.replaceState({}, "", "/standings" + (b.dataset.view === "conf" ? "" : "?view=" + b.dataset.view)); render(true); }));
+    $$("[data-view]", app).forEach((b) => b.addEventListener("click", () => { state.view = b.dataset.view; history.replaceState({}, "", sec("/standings") + (b.dataset.view === "conf" ? "" : "?view=" + b.dataset.view)); render(true); }));
     $$("[data-lg]", app).forEach((b) => b.addEventListener("click", () => {
       state.lg = b.dataset.lg || null;
       try { state.lg ? localStorage.setItem("rufl-lg", state.lg) : localStorage.removeItem("rufl-lg"); } catch (e) {}
@@ -766,7 +859,8 @@
   }
 
   // ---------------------------------------------------------------- nav, menus, search
-  const nav = $("#nav"), burger = $("#burger"), links = $("#links"), moreBtn = $("#moreBtn");
+  const nav = $("#nav"), burger = $("#burger"), links = $("#links");
+  const moreBtnEl = () => $("#moreBtn");
   function navState() {
     nav.classList.toggle("solid", scrollY > 30 || section !== "home");
     document.body.classList.toggle("strip-on", section === "home" && scrollY > innerHeight * 0.75);
@@ -774,15 +868,16 @@
   addEventListener("scroll", navState, { passive: true });
   function closeMenus() {
     burger.setAttribute("aria-expanded", "false"); links.classList.remove("open"); document.body.classList.remove("menu-open");
-    moreBtn.setAttribute("aria-expanded", "false");
+    moreBtnEl()?.setAttribute("aria-expanded", "false");
   }
   burger.addEventListener("click", () => {
     const open = burger.getAttribute("aria-expanded") !== "true";
     burger.setAttribute("aria-expanded", open); links.classList.toggle("open", open); document.body.classList.toggle("menu-open", open);
   });
-  moreBtn.addEventListener("click", (e) => { e.stopPropagation(); moreBtn.setAttribute("aria-expanded", moreBtn.getAttribute("aria-expanded") !== "true"); });
   document.addEventListener("click", (e) => {
-    if (!e.target.closest(".more")) moreBtn.setAttribute("aria-expanded", "false");
+    const mb = e.target.closest("#moreBtn");
+    if (mb) { mb.setAttribute("aria-expanded", mb.getAttribute("aria-expanded") !== "true"); return; }
+    if (!e.target.closest(".more")) moreBtnEl()?.setAttribute("aria-expanded", "false");
     const a = e.target.closest("a[href]");
     if (!a || a.target === "_blank" || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
     const href = a.getAttribute("href");
@@ -801,7 +896,8 @@
       .map((t) => ({ href: `/team/${t.id}`, html: `${mark(t.name, "sm")}<span><b>${esc(t.name)}</b><small>Team · ${recOf(t)}</small></span>` }));
     const players = Object.entries(D.players).filter(([k, p]) => q && (p.name.toLowerCase().includes(q) || k.includes(q))).sort((a, b) => b[1].pts - a[1].pts).slice(0, 8)
       .map(([k, p]) => ({ href: playerHref(k), html: `${hs(k, p.name, "sm")}<span><b class="pn">${esc(p.name)}</b><small>${esc(p.team || "Free agent")} · ${fmt(p.pts)} PTS</small></span>` }));
-    const pages = [["/scores", "Scores"], ["/standings", "Standings"], ["/stats", "Stat leaders"], ["/mvp", "MVP race"], ["/awards", "Weekly awards"], ["/records", "Record book"], ["/points", "How PTS work"]]
+    const pages = [...leagues().flatMap((l) => { const b = "/" + l.key.toLowerCase(); return [[b, `${l.name} home`], [b + "/scores", `${l.name} scores`], [b + "/standings", `${l.name} standings`], [b + "/stats", `${l.name} stats`], [b + "/teams", `${l.name} teams`], [b + "/" + race(l.key).slug, `${l.name} ${race(l.key).label} race`]]; }),
+      ["/awards", "Weekly awards"], ["/records", "Record book"], ["/points", "How PTS work"]]
       .filter(([, l]) => q && l.toLowerCase().includes(q)).map(([h, l]) => ({ href: h, html: `<span class="s-ico">↗</span><span><b>${l}</b><small>Page</small></span>` }));
     sItems = [...players, ...teams, ...pages];
     sIdx = Math.min(sIdx, Math.max(0, sItems.length - 1));
