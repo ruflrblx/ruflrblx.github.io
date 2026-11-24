@@ -98,14 +98,12 @@
   const teamLink = (name) => { const h = teamHref(name); return h ? `<a href="${h}" data-link>${esc(name)}</a>` : esc(name || ""); };
   const form = (s) => `<span class="form">${[...(s || "")].map((c) => `<i class="${c}" title="${c === "W" ? "Win" : c === "L" ? "Loss" : "Tie"}">${c}</i>`).join("")}</span>`;
   const page = (html, cls = "") => `<div class="page ${cls}">${html}</div>`;
-  function head(kick, title, extra = "", mark = "") {
-    return `<header class="pagehead reveal"><span class="ghost" aria-hidden="true">${esc(mark || title)}</span>
-      <div><p class="kicker">${kick}</p><h1>${title}</h1></div>${extra}</header>`;
+  function head(kick, title, extra = "") {
+    return `<header class="pagehead"><div><p class="kicker">${kick}</p><h1>${title}</h1></div>${extra}</header>`;
   }
   function empty(title, text, opts = {}) {
-    return `<div class="empty reveal"><img src="/img/logo.png" alt="" width="90" height="88" loading="lazy">
-      <h3>${esc(title)}</h3><p>${esc(text)}</p>
-      ${opts.join !== false ? `<a class="btn discord-link" href="${esc(invite())}" target="_blank" rel="noopener">${DC}Join the Discord</a>` : ""}</div>`;
+    return `<div class="empty"><h3>${esc(title)}</h3><p>${esc(text)}</p>
+      ${opts.join !== false ? `<a class="btn btn-sm discord-link" href="${esc(invite())}" target="_blank" rel="noopener">${DC}Join the Discord</a>` : ""}</div>`;
   }
   const sh = (title, link, sub) => `<div class="sh"><h2>${title}</h2>${sub ? `<span class="sub">${sub}</span>` : ""}${link ? `<a class="go" href="${link[0]}" data-link>${link[1]} ${ARW}</a>` : ""}</div>`;
   const hasGames = () => D.games.some((g) => String(g.season) === season());
@@ -224,171 +222,101 @@
     const games = D.games.filter((g) => String(g.season) === s);
     const latest = games.find(scored);
     const board = D.leaders[s] || {};
-    const confs = D.conferences.map((c) => ({ name: c.name, teams: confTeams(c) })).filter((c) => c.teams.length);
     const mv = D.mvp[s] || [];
     const power = D.teams.filter((t) => t.prank).sort((a, b) => a.prank - b.prank).slice(0, 5);
-    const thisWeek = pickWeek();
+    const wk = pickWeek();
+    const LG = leagues();
 
     const hero = `<section class="hero">
-      <div class="hero-bg" id="heroBg" aria-hidden="true"></div>
-      <div class="hero-shade" aria-hidden="true"></div>
-      <div class="hero-inner">
-        <div class="hero-copy">
-          <p class="eyebrow"><span class="dot"></span>Season ${esc(L.season)}${hasGames() && L.week ? ` · Week ${esc(L.week)}` : " · Series 1"} is live</p>
-          <h1 class="hero-h1"><span class="h1-top">The</span><span class="h1-main">Ultimate</span><span class="h1-main outline">Football</span><span class="h1-main">League</span></h1>
-          <p class="lede">RUFL is where Roblox's Ultimate Football players go to compete for real. Draft into a team, run it every week, and play for a <strong>$200 Ultimate Bowl</strong>.</p>
-          <div class="cta-row">
-            <a class="btn btn-lg discord-link" href="${esc(invite())}" target="_blank" rel="noopener">${DC}Join the Discord</a>
-            <a class="btn btn-lg btn-ghost" href="${hasGames() ? "/scores" : "/#join"}" data-link>${hasGames() ? "Latest scores" : "How it works"}</a>
-          </div>
-          <p class="live-pill"><span class="pulse"></span><b data-live="online">–</b> online now · <b data-live="members">–</b> members</p>
+      <div class="hero-media" id="heroBg" aria-hidden="true"></div>
+      <div class="wrap hero-inner">
+        <p class="hero-tag"><img src="/img/logo.png" alt="" width="34" height="33">Season ${esc(L.season)} · ${hasGames() && L.week ? `Week ${esc(L.week)}` : "Series 1"}</p>
+        <h1>Ultimate Football League</h1>
+        <p class="hero-sub">${LG.length > 1 ? `${LG.map((l) => esc(l.name)).join(" and ")} leagues` : "A competitive league"} on Roblox's Ultimate Football, with full schedules, tracked stats and a $200 Ultimate Bowl.</p>
+        <div class="hero-cta">
+          <a class="btn discord-link" href="${esc(invite())}" target="_blank" rel="noopener">${DC}Join the Discord</a>
+          <a class="btn btn-line" href="${hasGames() ? "/scores" : "/teams"}" data-link>${hasGames() ? "Scores" : "Teams"}</a>
         </div>
-        <div class="hero-logo" aria-hidden="true"><div class="glow"></div><img src="/img/logo.png" alt="" width="484" height="471" id="heroLogo"></div>
       </div>
-    </section>
-    <div class="ticker" aria-hidden="true"><div class="track">${Array(2).fill(`<span>Season ${esc(L.season)}</span><i>★</i><span>$200 Ultimate Bowl</span><i>★</i><span>Teams are signing</span><i>★</i><span>Free agents wanted</span><i>★</i><span>Ultimate Football</span><i>★</i><span>Series 1</span><i>★</i>`).join("")}</div></div>`;
+      <div class="hero-facts"><div class="wrap">
+        <div><b data-live="members">3,800+</b><span>Members</span></div>
+        <div><b data-live="online">–</b><span>Online now</span></div>
+        <div><b>${D.teams.length || "–"}</b><span>Teams</span></div>
+        <div><b>$200</b><span>Ultimate Bowl</span></div>
+      </div></div>
+    </section>`;
 
-    // ----- league dashboard (only once games exist)
-    let dash = "";
+    let main = "";
     if (latest) {
-      const p = latest.potg;
-      dash += `<section class="wrap blk">
-        ${sh("Game center", ["/scores", "All scores"], esc(latest.week))}
-        <div class="gc-grid">
-          <a class="gc-feature card reveal" href="${gameHref(latest.id)}" data-link>
-            <span class="gc-tag">Latest final</span>
-            ${scoreboard(latest, false)}
-            ${latest.recap ? `<p class="gc-recap">${esc(latest.recap)}</p>` : ""}
-            ${p ? `<div class="potg">${hs(p.key, p.player, "md")}<span><small>Player of the game</small><b>${esc(p.player)}</b><em>${esc(p.phrase || "")}</em></span><span class="potg-pts">${fmt(p.pts)}<small>PTS</small></span></div>` : ""}
-            <span class="gc-more">Box score ${ARW}</span>
-          </a>
-          <div class="card gc-week reveal">
-            <div class="gc-week-head"><b>${esc(thisWeek ? thisWeek.week : "This week")}</b><span>${thisWeek && thisWeek.matchups.every((m) => m.hs != null) ? "Final" : "Matchups"}</span></div>
-            ${(thisWeek ? thisWeek.matchups : games.slice(0, 6)).map(miniGame).join("")}
-          </div>
-        </div>
-      </section>`;
-    }
-    if (latest && Object.keys(board).length) {
-      dash += `<section class="wrap blk">${sh("Stat leaders", ["/stats", "All stats"], `Season ${esc(s)}`)}
-        <div class="lgrid">${D.tabs.map((t) => leaderCard(t, board[t.key] || [])).join("")}</div></section>`;
-    }
-    if (latest && (confs.length || D.teams.length)) {
+      const list = wk ? wk.matchups : games.slice(0, 8);
+      main += `<section class="blk">${sh(esc(wk ? wk.week : "Latest scores"), ["/scores", "All scores"])}
+        <div class="mg-grid">${list.map(miniGame).join("")}</div></section>`;
+      if (Object.keys(board).length) main += `<section class="blk">${sh("Stat leaders", ["/stats", "All stats"])}<div class="lgrid">${D.tabs.map((t) => leaderCard(t, board[t.key] || [])).join("")}</div></section>`;
       const groups = byLeague(confList(), true);
-      const cards = groups.length ? groups.map((g) => `${lgBanner(g.lg)}<div class="st-grid">${g.confs.map((c) => `<div class="card st-card reveal"><div class="st-head"><h3>${esc(c.name)}</h3><span>${esc(g.lg ? g.lg.name : "Conference")}</span></div>${standingsTable(c.teams, { compact: true, conf: true })}</div>`).join("")}</div>`).join("")
-        : `<div class="st-grid"><div class="card st-card reveal">${standingsTable(leagueOrder(), { compact: true })}</div></div>`;
-      dash += `<section class="wrap blk">${sh("Standings", ["/standings", "Full standings"])}<div class="lg-stack">${cards}</div></section>`;
-    }
-    if (latest && mv.length) {
-      const step = (e, place) => e ? `<a class="pod p${place} reveal" href="${playerHref(e.key)}" data-link style="--tc:${esc((teamBy(e.team) || {}).color || "#8b3dff")}">
-          ${hs(e.key, e.player, "xl")}<b>${esc(e.player)}</b><small>${esc(e.team || "Free agent")}</small>
-          <span class="pod-block"><em>${place}</em><span>${fmt(e.pts)} PTS</span></span></a>` : "<div></div>";
-      dash += `<section class="wrap blk mvp-blk">
-        <div>${sh("MVP race", ["/mvp", "Full race"])}<div class="podium">${step(mv[1], 2)}${step(mv[0], 1)}${step(mv[2], 3)}</div></div>
-        ${power.length ? `<div>${sh("Power rankings", ["/standings?view=power", "All"])}<div class="card pr-list reveal">${power.map((t) => `<a class="pr-row" href="/team/${t.id}" data-link style="--tc:${esc(t.color)}">
-            <span class="pr-rk">${t.prank}</span>${mark(t.name, "sm")}<span class="pr-nm"><b>${esc(t.name)}</b><small>${recOf(t)} · ${diffTxt(t.diff)}</small></span>${move(t.move)}</a>`).join("")}</div></div>` : ""}
+      if (groups.length) main += `<section class="blk">${sh("Standings", ["/standings", "Full standings"])}${groups.map((g) => `${lgBanner(g.lg)}<div class="st-grid">${g.confs.map((c) => `<div class="card st-card"><div class="st-head"><h3>${esc(c.name)}</h3></div>${standingsTable(c.teams, { compact: true, conf: true })}</div>`).join("")}</div>`).join("")}</section>`;
+      const rankRow = (href, rk, pic, name, sub, val, unit) => `<a class="rank-row" href="${href}" data-link><span class="rk">${rk}</span>${pic}<span class="who"><b>${name}</b><small>${sub}</small></span><span class="val">${val}${unit ? `<small>${unit}</small>` : ""}</span></a>`;
+      if (mv.length || power.length) main += `<section class="blk two">
+        ${mv.length ? `<div>${sh("MVP race", ["/mvp", "Full race"])}<div class="card list">${mv.slice(0, 5).map((e, i) => rankRow(playerHref(e.key), i + 1, hs(e.key, e.player, "sm"), `<span class="pn">${esc(e.player)}</span>`, esc(e.team || "Free agent"), fmt(e.pts), "PTS")).join("")}</div></div>` : ""}
+        ${power.length ? `<div>${sh("Power rankings", ["/standings?view=power", "All"])}<div class="card list">${power.map((t) => rankRow(`/team/${t.id}`, t.prank, mark(t.name, "sm"), esc(t.name), `${recOf(t)} · ${diffTxt(t.diff)}`, move(t.move), "")).join("")}</div></div>` : ""}
       </section>`;
-    }
-    if (latest && D.awards.length) {
-      const a = D.awards[0];
-      dash += `<section class="wrap blk">${sh("Player of the week", ["/awards", "All awards"], esc(a.week))}${awardCard(a)}</section>`;
-    }
-    if (!latest) {
-      dash = `<section class="wrap blk">${kickoff()}</section>`;
+      if (D.awards.length) main += `<section class="blk">${sh("Player of the week", ["/awards", "All awards"], esc(D.awards[0].week))}${awardCard(D.awards[0])}</section>`;
+    } else {
+      main += `<section class="blk">${sh(`Season ${esc(s)} teams`, ["/teams", "All teams"])}
+        <p class="blk-note">Scores, standings and stats appear here once Season ${esc(s)} games are posted.</p>
+        ${teamDirectory()}</section>`;
     }
 
-    const landing = `
-    <section class="stats-strip wrap">
-      <div class="stat reveal"><b class="num" data-live="members">–</b><span>Members</span></div>
-      <div class="stat reveal"><b class="num" data-live="online">–</b><span>Online now</span></div>
-      <div class="stat reveal"><b class="num accent">$200</b><span>Ultimate Bowl prize</span></div>
-      <div class="stat reveal"><b class="num">${esc(L.season)}</b><span>Seasons deep</span></div>
-    </section>
-    <section class="about wrap" id="about">
-      <div class="section-head reveal"><p class="kicker">The League</p><h2>Not a pickup game.<br><span>A league.</span></h2>
-        <p class="sub">RUFL takes Ultimate Football on Roblox and gives it everything a real league has: teams with front offices, a full season, standings that matter and a championship with money on it.</p></div>
-      <div class="cards">
-        ${feature("M12 2 3 6v6c0 5 3.8 9.4 9 10 5.2-.6 9-5 9-10V6l-9-4Z", "Real teams", "Every team has its own owner, coaches and roster. Sign, trade and build something that lasts past one game.")}
-        ${feature("M4 4h16v4H4zM4 10h10v4H4zM4 16h13v4H4z", "A full season", "Scheduled games, standings and playoffs, with every stat tracked on this site.")}
-        ${feature("M7 3h10v3h3v3a5 5 0 0 1-5 5h-.3A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 9.3 14H9a5 5 0 0 1-5-5V6h3V3Zm0 5H6v1a3 3 0 0 0 1.4 2.5A5 5 0 0 1 7 9V8Zm10 0v1a5 5 0 0 1-.4 2.5A3 3 0 0 0 18 9V8h-1Z", "$200 on the line", "The season ends at the Ultimate Bowl. Win it and your team takes home the $200 prize and the bragging rights.")}
-        ${feature("M16 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4ZM8 12a3 3 0 1 0-3-3 3 3 0 0 0 3 3Zm8 1c-2.7 0-8 1.3-8 4v3h16v-3c0-2.7-5.3-4-8-4ZM8 13.5c-.4 0-.9 0-1.4.1A5 5 0 0 1 9 17v3H0v-2.5C0 15.3 4.5 13.5 8 13.5Z", "A big community", "Thousands of members, with announcements, highlights and game-day talk all in one Discord.")}
+    const info = `
+    <section class="blk info" id="about">
+      <div class="info-text">
+        ${sh("About RUFL")}
+        <p>RUFL is a fan-run football league played on Ultimate Football on Roblox. Teams have owners and coaching staffs, sign players, and play a scheduled season that ends with the Ultimate Bowl.</p>
+        <p>Season ${esc(L.season)} runs ${LG.length > 1 ? `two leagues: ${LG.map((l) => `<b>${esc(l.full)}</b>`).join(" and ")}` : "one league"}, ${D.teams.length ? `${D.teams.length} teams in total` : "with teams announced in the Discord"}. Everything is organised in the RUFL Discord.</p>
       </div>
+      <ol class="steps" id="join">
+        <li><b>Join the Discord</b><span>Signings, schedules, results and announcements are all posted there.</span></li>
+        <li><b>Get verified</b><span>Link your Roblox account and pick your roles.</span></li>
+        <li><b>Get signed</b><span>Post in free agency. Teams sign players all season.</span></li>
+        <li class="cta"><a class="btn discord-link" href="${esc(invite())}" target="_blank" rel="noopener">${DC}Join the Discord</a></li>
+      </ol>
     </section>
-    <section class="season" id="season"><div class="wrap season-grid">
-      <div class="section-head reveal"><p class="kicker">Season ${esc(L.season)} · Series 1</p><h2>The road to the<br><span>Ultimate Bowl</span></h2>
-        <p class="sub">Here is how a RUFL season plays out, from signing day to the final snap.</p>
-        <a class="btn btn-lg discord-link" href="${esc(invite())}" target="_blank" rel="noopener">Sign up for Season ${esc(L.season)}</a></div>
-      <ol class="road">
-        <li class="reveal"><span class="step">01</span><div><h3>Sign up</h3><p>Join the Discord, get verified and put yourself on the free-agent board.</p></div></li>
-        <li class="reveal"><span class="step">02</span><div><h3>Get signed</h3><p>Front offices are always scouting. Show up, play well and teams will come to you.</p></div></li>
-        <li class="reveal"><span class="step">03</span><div><h3>Regular season</h3><p>Play your scheduled games. Every result goes into the standings.</p></div></li>
-        <li class="reveal"><span class="step">04</span><div><h3>Playoffs</h3><p>The top teams move on. One bad game and the season is over.</p></div></li>
-        <li class="reveal final"><span class="step">UB</span><div><h3>Ultimate Bowl</h3><p>Two teams, one title, $200 on the line.</p></div></li>
-      </ol></div></section>
-    <section class="bowl wrap" id="bowl">
-      <div class="section-head center reveal"><p class="kicker">Ultimate Bowl</p><h2>Every season ends <span>here</span></h2><p class="sub">The biggest game in RUFL, built up all season.</p></div>
+    <section class="blk" id="bowl">${sh("Ultimate Bowl", null, "$200 prize this season")}
       <div class="bowl-grid">
-        <figure class="bowl-card reveal"><img src="/img/bowl5.jpg" alt="Ultimate Bowl V poster" loading="lazy" width="960" height="540"><figcaption><b>Ultimate Bowl V</b><span>RUFL title game</span></figcaption></figure>
-        <figure class="bowl-card reveal"><img src="/img/bowl4.jpg" alt="Ultimate Bowl IV poster" loading="lazy" width="960" height="540"><figcaption><b>Ultimate Bowl IV</b><span>Tampa Bay Buccaneers Stadium</span></figcaption></figure>
-      </div>
-      <div class="next-bowl reveal"><div><p class="kicker">Up next</p><h3>Season ${esc(L.season)}'s Ultimate Bowl</h3><p>Season ${esc(L.season)}'s champion is decided here. Will your name be on it?</p></div><div class="prize"><span>Prize</span><b>$200</b></div></div>
-    </section>
-    <section class="join wrap" id="join">
-      <div class="section-head center reveal"><p class="kicker">How to Join</p><h2>Three steps to <span>game day</span></h2></div>
-      <div class="steps">
-        <div class="join-step reveal"><span class="big">1</span><h3>Join the Discord</h3><p>Everything in RUFL runs through the server: signings, schedules, results and announcements.</p><a class="link discord-link" href="${esc(invite())}" target="_blank" rel="noopener">${esc(invite().replace("https://", ""))} →</a></div>
-        <div class="join-step reveal"><span class="big">2</span><h3>Get verified</h3><p>Link your Roblox account and pick your roles so teams can find you.</p></div>
-        <div class="join-step reveal"><span class="big">3</span><h3>Get signed</h3><p>Teams are always looking for players. Hit the free-agent channel and let them know what you can do.</p></div>
+        <figure class="bowl-card"><img src="/img/bowl5.jpg" alt="Ultimate Bowl V poster" loading="lazy" width="960" height="540"><figcaption>Ultimate Bowl V</figcaption></figure>
+        <figure class="bowl-card"><img src="/img/bowl4.jpg" alt="Ultimate Bowl IV poster" loading="lazy" width="960" height="540"><figcaption>Ultimate Bowl IV · Tampa Bay Buccaneers Stadium</figcaption></figure>
       </div>
     </section>
-    <section class="faq wrap" id="faq">
-      <div class="section-head center reveal"><p class="kicker">FAQ</p><h2>Questions?</h2></div>
+    <section class="blk" id="faq">${sh("FAQ")}
       <div class="qa">
-        <details class="reveal"><summary>What game does RUFL play?</summary><p>Ultimate Football on Roblox. All league games are played there.</p></details>
-        <details class="reveal"><summary>Do I need a team to join?</summary><p>No. Join the Discord as a free agent. Teams are always looking for players, and the free-agent channel is where they look.</p></details>
-        <details class="reveal"><summary>What is the Ultimate Bowl?</summary><p>The championship game at the end of every RUFL season. This season the winning team plays for $200.</p></details>
-        <details class="reveal"><summary>Where do the stats on this site come from?</summary><p>From the stat sheets of every official RUFL game. Scores, standings, leaders and player pages update after each game is posted.</p></details>
-        <details class="reveal"><summary>Can I join in the middle of a season?</summary><p>Yes. Teams sign players during the season, so join the Discord and get on the free-agent board.</p></details>
-      </div>
-    </section>
-    <section class="final">
-      <div class="final-bg" aria-hidden="true"></div>
-      <div class="wrap final-inner reveal">
-        <img src="/img/logo.png" alt="RUFL logo" width="160" height="156" loading="lazy">
-        <h2>Your team is<br><span>waiting.</span></h2>
-        <p><b data-live="members">Thousands of</b> members are already in. Season ${esc(L.season)} doesn't wait.</p>
-        <a class="btn btn-lg discord-link" href="${esc(invite())}" target="_blank" rel="noopener">${DC}Join RUFL on Discord</a>
+        <details><summary>What game does RUFL play?</summary><p>Ultimate Football on Roblox. All league games are played there.</p></details>
+        <details><summary>Do I need a team to join?</summary><p>No. Join the Discord as a free agent. Teams sign players from the free-agency channel all season.</p></details>
+        <details><summary>What is the Ultimate Bowl?</summary><p>The championship game at the end of every RUFL season. This season the winning team plays for $200.</p></details>
+        <details><summary>Where do the stats on this site come from?</summary><p>From the stat sheets of official RUFL games. Scores, standings, leaders and player pages update after each game is posted.</p></details>
       </div>
     </section>`;
-    return `<div class="home">${hero}${dash}${landing}</div>`;
+
+    return `<div class="home">${hero}<div class="wrap home-body">${main}${info}</div>
+      <section class="cta-band"><div class="wrap"><div><h2>Play in RUFL</h2><p><b data-live="members">3,800+</b> members. Teams are signing players for Season ${esc(L.season)}.</p></div>
+        <a class="btn discord-link" href="${esc(invite())}" target="_blank" rel="noopener">${DC}Join the Discord</a></div></section></div>`;
   }
-  const feature = (path, title, text) => `<article class="fcard reveal"><div class="ico"><svg viewBox="0 0 24 24"><path d="${path}"/></svg></div><h3>${title}</h3><p>${text}</p></article>`;
-  const move = (m) => (m > 0 ? `<span class="mv up" title="Up ${m}">▲${m}</span>` : m < 0 ? `<span class="mv down" title="Down ${-m}">▼${-m}</span>` : `<span class="mv">–</span>`);
+
+  // every team, grouped by league and conference (pre-season home)
+  function teamDirectory() {
+    const groups = byLeague(confList(), true);
+    if (!groups.length) return D.teams.length ? `<div class="dir-grid">${D.teams.map(dirTeam).join("")}</div>` : empty("Teams coming soon", "Team pages appear here once the season's teams are set.");
+    return `<div class="dir">${groups.map((g) => `<div class="dir-lg">${lgBanner(g.lg)}<div class="dir-confs">${g.confs.map((c) => `<div class="card dir-conf"><h3>${esc(c.name)}</h3>${c.teams.map(dirTeam).join("")}</div>`).join("")}</div></div>`).join("")}</div>`;
+  }
+  const dirTeam = (t) => `<a class="dir-team" href="/team/${t.id}" data-link>${mark(t.name, "sm")}<span>${esc(t.name)}</span></a>`;
+
+  const move = (m) => (m > 0 ? `<span class="mv up" title="Up ${m}">▲ ${m}</span>` : m < 0 ? `<span class="mv down" title="Down ${-m}">▼ ${-m}</span>` : `<span class="mv">–</span>`);
 
   function miniGame(m) {
     const ok = m.hs != null && m.as != null;
     const hw = ok && m.hs > m.as, aw = ok && m.as > m.hs;
-    const row = (name, sc, w, l) => `<span class="mg-row ${w ? "w" : ""} ${l ? "l" : ""}">${mark(name, "xs")}<b>${esc(name || "TBD")}</b><em>${ok ? sc : ""}</em></span>`;
-    const inner = `${row(m.away, m.as, aw, ok && !aw)}${row(m.home, m.hs, hw, ok && !hw)}<span class="mg-st">${ok ? "Final" : "Upcoming"}</span>`;
+    const row = (name, sc, w, l) => `<span class="mg-row ${w ? "w" : ""} ${l ? "l" : ""}">${mark(name, "xs")}<b>${esc((teamBy(name) || {}).abbr || name || "TBD")}</b><em>${ok ? sc : ""}</em></span>`;
+    const inner = `<span class="mg-st">${ok ? "Final" : esc(m.week || "Upcoming")}</span>${row(m.away, m.as, aw, ok && !aw)}${row(m.home, m.hs, hw, ok && !hw)}`;
     const id = m.game_id ?? m.id;
     return ok && id != null ? `<a class="mg" href="${gameHref(id)}" data-link>${inner}</a>` : `<div class="mg">${inner}</div>`;
-  }
-
-  function kickoff() {
-    const L = D.league;
-    const teams = D.teams;
-    return `<div class="kickoff reveal">
-      <div class="ko-text">
-        <p class="kicker">Season ${esc(L.season)} stats</p>
-        <h2>The stat book <span>opens soon</span></h2>
-        <p>Scores, standings, stat leaders, the MVP race and every player's numbers land here as soon as Season ${esc(L.season)} games are posted.</p>
-        <div class="ko-links">
-          <a href="/scores" data-link>Scores</a><a href="/standings" data-link>Standings</a><a href="/stats" data-link>Stat leaders</a><a href="/mvp" data-link>MVP race</a>
-        </div>
-      </div>
-      <div class="ko-art" aria-hidden="true">${teams.length ? leagues().map((l) => { const ts = teams.filter((t) => leagueOf(t.name) === l.key); return ts.length ? `<div class="ko-lg"><b>${esc(l.name)}</b><div>${ts.map((t, i) => `<span style="--i:${i}" title="${esc(t.name)}">${mark(t.name, ts.length > 12 ? "sm" : "md")}</span>`).join("")}</div></div>` : ""; }).join("") || teams.map((t, i) => `<span style="--i:${i}">${mark(t.name, "md")}</span>`).join("")
-        : `<div class="ko-board"><div><span>HOME</span><b>00</b></div><div class="ko-q"><span>QTR</span><b>1</b></div><div><span>AWAY</span><b>00</b></div></div>`}</div>
-    </div>`;
   }
 
   // ---------------------------------------------------------------- SCORES
@@ -422,7 +350,7 @@
     } else {
       body = empty("No games yet", `Season ${s} scores show up here as soon as the first game is posted.`);
     }
-    return page(`${head(`Season ${esc(s)}`, "Scores", tools(lgSeg()), "Scores")}${picker}${body}`);
+    return page(`${head(`Season ${esc(s)}`, "Scores", tools(lgSeg()))}${picker}${body}`);
   }
   function scoreCard(g) {
     const ok = scored(g);
@@ -471,7 +399,7 @@
     let view = state.view || qv || views[0][0];
     if (!views.some(([k]) => k === view)) view = views[0][0];
     state.view = view;
-    const top = (extra) => head(`Season ${esc(season())}`, "Standings", extra, "Standings");
+    const top = (extra) => head(`Season ${esc(season())}`, "Standings", extra);
     if (!D.teams.length) return page(`${top("")}${empty("No standings yet", "Standings fill in once teams play their first games.")}`);
     const seg = `<div class="seg" role="tablist">${views.map(([k, l]) => `<button class="${k === view ? "on" : ""}" data-view="${k}" role="tab" aria-selected="${k === view}">${l}</button>`).join("")}</div>`;
     const lgTeams = (key) => leagueOrder().filter((t) => (key ? leagueOf(t.name) === key : !leagueOf(t.name)));
@@ -499,7 +427,7 @@
   // ---------------------------------------------------------------- STATS
   function statsPage(key) {
     const t = tab(String(key || "").toUpperCase()) || D.tabs[0];
-    if (!t) return page(`${head("Stat leaders", "Stats")}${empty("No stats yet", "Stat leaders show up once games are posted.")}`);
+    if (!t) return page(`${head("Stat leaders")}${empty("No stats yet", "Stat leaders show up once games are posted.")}`);
     const ask = new URLSearchParams(location.search).get("season");
     const opts = [...D.league.seasons.map(String).reverse(), ...(D.leaders.all ? ["all"] : [])];
     const s = opts.includes(ask) ? ask : season();
@@ -514,7 +442,7 @@
       $("#seasonSel")?.addEventListener("change", (e) => go(`/stats/${t.key.toLowerCase()}${e.target.value === season() ? "" : "?season=" + e.target.value}`));
       draw();
     });
-    return page(`${head(s === "all" ? "All time" : `Season ${esc(s)}`, `${esc(t.label)} <span>leaders</span>`, tools(lgSeg(), seasonSel), "Stats")}
+    return page(`${head(s === "all" ? "All time" : `Season ${esc(s)}`, `${esc(t.label)} <span>leaders</span>`, tools(lgSeg(), seasonSel))}
       ${tabsNav}
       ${rows.length ? `<div class="top3">${top3.map((r, i) => {
         const tm = teamBy(r.team);
@@ -569,7 +497,7 @@
     const others = D.teams.filter((t) => !placed.has(t.id) && inLg(t.name));
     const html = groups.map((g) => `<section class="lg-block">${lgBanner(g.lg)}${g.confs.map((c) => `<section class="blk-sm">${sh(esc(c.name), null, `${esc(c.full !== c.name ? c.full + " · " : "")}${c.teams.length} teams`)}<div class="tgrid">${c.teams.map(card).join("")}</div></section>`).join("")}</section>`).join("")
       + (others.length ? `<section class="blk-sm">${sh(groups.length ? "Other teams" : "All teams", null, `${others.length} teams`)}<div class="tgrid">${others.map(card).join("")}</div></section>` : "");
-    return page(`${head(`Season ${esc(season())}`, "Teams", tools(lgSeg()), "Teams")}
+    return page(`${head(`Season ${esc(season())}`, "Teams", tools(lgSeg()))}
       ${html || empty("Teams coming soon", "Every RUFL team gets its own page here, with its roster, schedule and leaders.")}`);
   }
 
@@ -669,7 +597,7 @@
   function mvpPage() {
     const s = season();
     const rows = (D.mvp[s] || []).filter((r) => inLg(r.team));
-    return page(`${head(`Season ${esc(s)}`, "MVP <span>race</span>", tools(lgSeg()), "MVP")}
+    return page(`${head(`Season ${esc(s)}`, "MVP <span>race</span>", tools(lgSeg()))}
       ${rows.length ? `${legend()}<div class="mvp-list">${mvpRows(rows, 50)}</div><p class="note">Total PTS across every position a player has stats at. The bar shows where the points come from.</p>`
         : empty("The race hasn't started", "The MVP race ranks every player by total PTS once games are posted.")}`);
   }
@@ -684,7 +612,7 @@
     </section>`;
   }
   function awardsPage() {
-    return page(`${head(`Season ${esc(season())}`, "Weekly <span>awards</span>", "", "Awards")}
+    return page(`${head(`Season ${esc(season())}`, "Weekly <span>awards</span>", "")}
       ${D.awards.length ? `<div class="award-list">${D.awards.map(awardCard).join("")}</div>` : empty("No awards yet", "Player and Team of the Week are picked from each week's games.")}`);
   }
   function recordsPage() {
@@ -692,12 +620,12 @@
     const card = (x, isSeason) => `<a class="rcard reveal" href="${playerHref(x.key)}" data-link>
       <span class="r-lbl">${esc(x.label)}</span><span class="r-val">${esc(x.value)}</span>
       <span class="r-by">${hs(x.key, x.player, "sm")}<span><b>${esc(x.player)}</b><small>${isSeason ? `Season ${esc(x.season)}` : esc([x.week, x.opp ? "vs " + x.opp : "", `Season ${x.season}`].filter(Boolean).join(" · "))}</small></span></span></a>`;
-    return page(`${head("All time", "Record <span>book</span>", "", "Records")}
+    return page(`${head("All time", "Record <span>book</span>", "")}
       <section class="blk-sm">${sh("Single game")}${r.game.length ? `<div class="rgrid">${r.game.map((x) => card(x, false)).join("")}</div>` : empty("No records yet", "Records are set as games are posted.", { join: false })}</section>
       <section class="blk-sm">${sh("Single season")}${r.season.length ? `<div class="rgrid">${r.season.map((x) => card(x, true)).join("")}</div>` : empty("No records yet", "Season records fill in as the season goes.", { join: false })}</section>`);
   }
   function pointsPage() {
-    return page(`${head("Scoring", "How <span>PTS</span> work", "", "PTS")}
+    return page(`${head("Scoring", "How <span>PTS</span> work", "")}
       <p class="lead-p reveal">Every stat line earns RUFL points (PTS). Big plays like yards, touchdowns, takeaways and clutch downs carry the score, and turnovers cost you. PTS decide the stat leaders, the MVP race and the weekly awards.</p>
       ${D.tabs.length ? `<div class="guide-grid">${D.tabs.map((t) => `<div class="card guide reveal"><div class="g-head"><span class="g-pos">${esc(t.pos)}</span><h3>${esc(t.label)}</h3></div><ul>${String(t.guide || "").split(/[,;]\s*/).filter(Boolean).map((x) => `<li class="${/^-/.test(x.trim()) ? "neg" : ""}">${esc(x.trim())}</li>`).join("")}</ul></div>`).join("")}</div>` : empty("Scoring guide coming", "The PTS guide is published with the first stats.", { join: false })}`);
   }
@@ -717,14 +645,14 @@
   }
   function rulesPage() {
     const rb = D.rulebook;
-    if (!rb || !rb.articles || !rb.articles.length) return page(`${head("Official", "Rule <span>book</span>", "", "Rules")}${empty("No rule book yet", "League staff haven't published the rule book here yet. The rules live in the Discord for now.")}`);
-    return page(`${head(`Season ${esc(season())} · Official`, "Rule <span>book</span>", "", "Rules")}
+    if (!rb || !rb.articles || !rb.articles.length) return page(`${head("Official", "Rule <span>book</span>", "")}${empty("No rule book yet", "League staff haven't published the rule book here yet. The rules live in the Discord for now.")}`);
+    return page(`${head(`Season ${esc(season())} · Official`, "Rule <span>book</span>", "")}
       <p class="lead-p">${esc(rb.intro || "")}</p>
       <div class="rules"><nav class="card rules-toc">${rb.articles.map((a) => `<a href="#article-${a.num}"><span>${a.num}</span>${esc(a.title)}</a>`).join("")}</nav>
       <div>${rb.articles.map((a) => `<section class="card rule-art" id="article-${a.num}"><header><span class="rule-num">${a.num}</span><h2>${esc(a.title)}</h2></header><div class="rule-text">${md(a.body)}</div></section>`).join("")}</div></div>`);
   }
   function notFound() {
-    return page(`${head("404", "Off the <span>field</span>", "", "404")}${empty("Page not found", "That page doesn't exist, or its stats haven't been posted yet.", { join: false })}<p class="center"><a class="btn" href="/" data-link>Back to home</a></p>`);
+    return page(`${head("404", "Off the <span>field</span>", "")}${empty("Page not found", "That page doesn't exist, or its stats haven't been posted yet.", { join: false })}<p class="center"><a class="btn" href="/" data-link>Back to home</a></p>`);
   }
 
   // ---------------------------------------------------------------- router
@@ -843,15 +771,7 @@
     nav.classList.toggle("solid", scrollY > 30 || section !== "home");
     document.body.classList.toggle("strip-on", section === "home" && scrollY > innerHeight * 0.75);
   }
-  addEventListener("scroll", () => {
-    navState();
-    if (reduce || section !== "home") return;
-    const bg = $("#heroBg"), lg = $("#heroLogo");
-    if (!bg) return;
-    const y = Math.min(scrollY, innerHeight);
-    bg.style.transform = `translateY(${y * 0.25}px) scale(1.08)`;
-    if (lg) lg.parentElement.style.transform = `translateY(${y * -0.12}px)`;
-  }, { passive: true });
+  addEventListener("scroll", navState, { passive: true });
   function closeMenus() {
     burger.setAttribute("aria-expanded", "false"); links.classList.remove("open"); document.body.classList.remove("menu-open");
     moreBtn.setAttribute("aria-expanded", "false");
@@ -880,7 +800,7 @@
     const teams = D.teams.filter((t) => !q || t.name.toLowerCase().includes(q) || String(t.abbr || "").toLowerCase().includes(q)).slice(0, 6)
       .map((t) => ({ href: `/team/${t.id}`, html: `${mark(t.name, "sm")}<span><b>${esc(t.name)}</b><small>Team · ${recOf(t)}</small></span>` }));
     const players = Object.entries(D.players).filter(([k, p]) => q && (p.name.toLowerCase().includes(q) || k.includes(q))).sort((a, b) => b[1].pts - a[1].pts).slice(0, 8)
-      .map(([k, p]) => ({ href: playerHref(k), html: `${hs(k, p.name, "sm")}<span><b>${esc(p.name)}</b><small>${esc(p.team || "Free agent")} · ${fmt(p.pts)} PTS</small></span>` }));
+      .map(([k, p]) => ({ href: playerHref(k), html: `${hs(k, p.name, "sm")}<span><b class="pn">${esc(p.name)}</b><small>${esc(p.team || "Free agent")} · ${fmt(p.pts)} PTS</small></span>` }));
     const pages = [["/scores", "Scores"], ["/standings", "Standings"], ["/stats", "Stat leaders"], ["/mvp", "MVP race"], ["/awards", "Weekly awards"], ["/records", "Record book"], ["/points", "How PTS work"]]
       .filter(([, l]) => q && l.toLowerCase().includes(q)).map(([h, l]) => ({ href: h, html: `<span class="s-ico">↗</span><span><b>${l}</b><small>Page</small></span>` }));
     sItems = [...players, ...teams, ...pages];
