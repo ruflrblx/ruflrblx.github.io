@@ -8,7 +8,8 @@
   const app = $("#app");
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let D = null, lastUpdated = null, live = null;
-  const state = { sort: {}, view: null, week: null };
+  const state = { sort: {}, view: null, week: null, lg: null };
+  try { state.lg = localStorage.getItem("rufl-lg") || null; } catch (e) {}
 
   // ---------------------------------------------------------------- helpers
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -33,6 +34,39 @@
   const diffCls = (d) => (d > 0 ? "up" : d < 0 ? "down" : "");
   const diffTxt = (d) => (d > 0 ? "+" : "") + (d ?? 0);
   const confTeams = (c) => c.teams.map(teamById).filter(Boolean);
+  // ----- leagues (RUFL runs an NFL league and a CFB league; conferences carry "league")
+  const leagues = () => (D.leagues && D.leagues.length ? D.leagues
+    : [...new Set(D.conferences.map((c) => c.league).filter(Boolean))].map((k) => ({ key: k, name: k, full: k })));
+  const leagueOf = (name) => {
+    const t = teamBy(name); if (!t) return null;
+    if (t.league) return t.league;
+    const c = D.conferences.find((x) => x.name === t.conf); return c ? c.league || null : null;
+  };
+  const inLg = (name) => !state.lg || leagueOf(name) === state.lg;
+  const confList = () => D.conferences.map((c) => ({ name: c.name, full: c.full || c.name, league: c.league || null, teams: confTeams(c) })).filter((c) => c.teams.length);
+  function byLeague(list, all) {
+    const groups = leagues().filter((l) => all || !state.lg || l.key === state.lg)
+      .map((l) => ({ lg: l, confs: list.filter((c) => c.league === l.key) })).filter((g) => g.confs.length);
+    const loose = list.filter((c) => !c.league);
+    if (loose.length && (all || !state.lg)) groups.push({ lg: null, confs: loose });
+    return groups;
+  }
+  const lgBanner = (l) => (l ? `<div class="lg-banner lg-${esc(l.key)}"><b>${esc(l.name)}</b><span>${esc(l.full)}</span></div>` : "");
+  function lgSeg() {
+    const L = leagues();
+    if (L.length < 2) return "";
+    const cur = state.lg || "";
+    return `<div class="seg lg-seg" role="tablist" aria-label="League">${[["", "All"], ...L.map((l) => [l.key, l.name])]
+      .map(([k, l]) => `<button class="${cur === k ? "on" : ""}" data-lg="${esc(k)}" role="tab" aria-selected="${cur === k}">${esc(l)}</button>`).join("")}</div>`;
+  }
+  const tools = (...parts) => `<div class="head-tools">${parts.filter(Boolean).join("")}</div>`;
+  function crestColor(hex) {
+    // very dark team colours (Browns, Texans, Cowboys...) get lifted a little so the crest reads on the dark site
+    const h = String(hex || "#6b4bb3").replace("#", "");
+    if (lum("#" + h) > 0.14) return "#" + h;
+    const n = parseInt(h.padEnd(6, "0").slice(0, 6), 16), mix = (v) => Math.round(v + (255 - v) * 0.22);
+    return "#" + [mix((n >> 16) & 255), mix((n >> 8) & 255), mix(n & 255)].map((v) => v.toString(16).padStart(2, "0")).join("");
+  }
   const lum = (hex) => { const n = parseInt(String(hex || "#6b4bb3").replace("#", "").padEnd(6, "0").slice(0, 6), 16); return (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255; };
   const ago = (ts) => {
     const s = Math.max(1, Math.round(Date.now() / 1000 - ts));
@@ -49,7 +83,7 @@
   // team crest (shield) in the team colour, or the team logo/emoji when there is one
   function mark(name, size = "") {
     const t = teamBy(name);
-    const c = (t && t.color) || "#6b4bb3";
+    const c = crestColor((t && t.color) || "#6b4bb3");
     const img = t && (t.logo || t.emoji_url);
     const ab = (t && t.abbr) || abbr(name);
     return `<span class="crest ${size} ${lum(c) > 0.6 ? "lt" : ""} ${img ? "has-img" : ""}" style="--tc:${esc(c)}" aria-hidden="true">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<b>${esc(ab)}</b>`}</span>`;
@@ -240,9 +274,10 @@
         <div class="lgrid">${D.tabs.map((t) => leaderCard(t, board[t.key] || [])).join("")}</div></section>`;
     }
     if (latest && (confs.length || D.teams.length)) {
-      const cards = confs.length ? confs.map((c) => `<div class="card st-card reveal"><div class="st-head"><h3>${esc(c.name)}</h3><span>Conference</span></div>${standingsTable(c.teams, { compact: true, conf: true })}</div>`).join("")
-        : `<div class="card st-card reveal">${standingsTable(leagueOrder(), { compact: true })}</div>`;
-      dash += `<section class="wrap blk">${sh("Standings", ["/standings", "Full standings"])}<div class="st-grid">${cards}</div></section>`;
+      const groups = byLeague(confList(), true);
+      const cards = groups.length ? groups.map((g) => `${lgBanner(g.lg)}<div class="st-grid">${g.confs.map((c) => `<div class="card st-card reveal"><div class="st-head"><h3>${esc(c.name)}</h3><span>${esc(g.lg ? g.lg.name : "Conference")}</span></div>${standingsTable(c.teams, { compact: true, conf: true })}</div>`).join("")}</div>`).join("")
+        : `<div class="st-grid"><div class="card st-card reveal">${standingsTable(leagueOrder(), { compact: true })}</div></div>`;
+      dash += `<section class="wrap blk">${sh("Standings", ["/standings", "Full standings"])}<div class="lg-stack">${cards}</div></section>`;
     }
     if (latest && mv.length) {
       const step = (e, place) => e ? `<a class="pod p${place} reveal" href="${playerHref(e.key)}" data-link style="--tc:${esc((teamBy(e.team) || {}).color || "#8b3dff")}">
@@ -341,7 +376,7 @@
 
   function kickoff() {
     const L = D.league;
-    const teams = D.teams.slice(0, 16);
+    const teams = D.teams;
     return `<div class="kickoff reveal">
       <div class="ko-text">
         <p class="kicker">Season ${esc(L.season)} stats</p>
@@ -351,7 +386,7 @@
           <a href="/scores" data-link>Scores</a><a href="/standings" data-link>Standings</a><a href="/stats" data-link>Stat leaders</a><a href="/mvp" data-link>MVP race</a>
         </div>
       </div>
-      <div class="ko-art" aria-hidden="true">${teams.length ? teams.map((t, i) => `<span style="--i:${i}">${mark(t.name, "md")}</span>`).join("")
+      <div class="ko-art" aria-hidden="true">${teams.length ? leagues().map((l) => { const ts = teams.filter((t) => leagueOf(t.name) === l.key); return ts.length ? `<div class="ko-lg"><b>${esc(l.name)}</b><div>${ts.map((t, i) => `<span style="--i:${i}" title="${esc(t.name)}">${mark(t.name, ts.length > 12 ? "sm" : "md")}</span>`).join("")}</div></div>` : ""; }).join("") || teams.map((t, i) => `<span style="--i:${i}">${mark(t.name, "md")}</span>`).join("")
         : `<div class="ko-board"><div><span>HOME</span><b>00</b></div><div class="ko-q"><span>QTR</span><b>1</b></div><div><span>AWAY</span><b>00</b></div></div>`}</div>
     </div>`;
   }
@@ -366,7 +401,7 @@
   function scoresPage() {
     const s = season();
     const weeks = D.schedule || [];
-    const games = D.games.filter((g) => String(g.season) === s);
+    const games = D.games.filter((g) => String(g.season) === s && inLg(g.home || g.away));
     let body = "", picker = "";
     if (weeks.length) {
       const w = pickWeek();
@@ -374,10 +409,11 @@
         const done = x.matchups.length && x.matchups.every((m) => m.hs != null);
         return `<button class="wk ${x.week === w.week ? "on" : ""}" data-week="${esc(x.week)}" role="tab" aria-selected="${x.week === w.week}"><span>${esc(String(x.week).replace("Week ", "WK "))}</span><small>${done ? "Final" : x.matchups.some((m) => m.hs != null) ? "Live" : "Next"}</small></button>`;
       }).join("")}</div>`;
-      body = `<div class="score-grid">${w.matchups.map((m) => {
+      const ms = w.matchups.filter((m) => inLg(m.home || m.away));
+      body = ms.length ? `<div class="score-grid">${ms.map((m) => {
         const g = m.game_id != null ? D.games.find((x) => x.id === m.game_id) : null;
         return scoreCard(g || { home: m.home, away: m.away, hs: m.hs, as: m.as, week: w.week, id: m.game_id });
-      }).join("")}</div>`;
+      }).join("")}</div>` : empty(`No ${state.lg || ""} games this week`, "Pick another week or league.", { join: false });
     } else if (games.length) {
       const byWeek = {};
       games.forEach((g) => (byWeek[g.week || "Other"] = byWeek[g.week || "Other"] || []).push(g));
@@ -386,7 +422,7 @@
     } else {
       body = empty("No games yet", `Season ${s} scores show up here as soon as the first game is posted.`);
     }
-    return page(`${head(`Season ${esc(s)}`, "Scores", "", "Scores")}${picker}${body}`);
+    return page(`${head(`Season ${esc(s)}`, "Scores", tools(lgSeg()), "Scores")}${picker}${body}`);
   }
   function scoreCard(g) {
     const ok = scored(g);
@@ -430,26 +466,34 @@
   }
   function standingsPage() {
     const qv = new URLSearchParams(location.search).get("view");
-    const confs = D.conferences.map((c) => ({ name: c.name, teams: confTeams(c) })).filter((c) => c.teams.length);
-    const views = [["conf", "Conferences"], ["league", "League"], ["power", "Power rankings"]].filter(([k]) => k !== "conf" || confs.length);
+    const confs = confList();
+    const views = [["conf", "Conferences"], ["league", "Table"], ["power", "Power rankings"]].filter(([k]) => k !== "conf" || confs.length);
     let view = state.view || qv || views[0][0];
     if (!views.some(([k]) => k === view)) view = views[0][0];
     state.view = view;
-    if (!D.teams.length) return page(`${head(`Season ${esc(season())}`, "Standings", "", "Standings")}${empty("No standings yet", "Standings fill in once teams play their first games.")}`);
+    const top = (extra) => head(`Season ${esc(season())}`, "Standings", extra, "Standings");
+    if (!D.teams.length) return page(`${top("")}${empty("No standings yet", "Standings fill in once teams play their first games.")}`);
     const seg = `<div class="seg" role="tablist">${views.map(([k, l]) => `<button class="${k === view ? "on" : ""}" data-view="${k}" role="tab" aria-selected="${k === view}">${l}</button>`).join("")}</div>`;
+    const lgTeams = (key) => leagueOrder().filter((t) => (key ? leagueOf(t.name) === key : !leagueOf(t.name)));
     let body = "";
-    if (view === "conf") body = `<div class="st-stack">${confs.map((c) => `<section class="card st-card reveal"><div class="st-head"><h3>${esc(c.name)}</h3><span>${c.teams.length} teams</span></div>${standingsTable(c.teams, { conf: true })}</section>`).join("")}</div>`;
-    else if (view === "league") body = `<section class="card st-card reveal">${standingsTable(leagueOrder(), { conf: confs.length > 0 })}</section>`;
-    else {
-      const list = D.teams.filter((t) => t.prank).sort((a, b) => a.prank - b.prank);
+    if (view === "conf") {
+      body = byLeague(confs).map((g) => `<section class="lg-block">${lgBanner(g.lg)}<div class="st-grid ${g.confs.length === 1 ? "one" : ""}">${g.confs.map((c) => `<section class="card st-card reveal"><div class="st-head"><h3>${esc(c.name)}</h3><span>${esc(c.full !== c.name ? c.full : `${c.teams.length} teams`)}</span></div>${standingsTable(c.teams, { conf: true })}</section>`).join("")}</div></section>`).join("");
+    } else if (view === "league") {
+      const L = leagues().filter((l) => !state.lg || l.key === state.lg);
+      body = (L.length ? L : [null]).map((l) => {
+        const list = l ? lgTeams(l.key) : leagueOrder();
+        return list.length ? `<section class="lg-block">${lgBanner(l)}<section class="card st-card reveal">${standingsTable(list, { conf: confs.length > 0 })}</section></section>` : "";
+      }).join("");
+    } else {
+      const list = D.teams.filter((t) => t.prank && inLg(t.name)).sort((a, b) => a.prank - b.prank);
       const max = Math.max(1, ...list.map((t) => t.power || 0));
-      body = list.length ? `<div class="power">${list.map((t) => `<a class="pw-row card reveal" href="/team/${t.id}" data-link style="--tc:${esc(t.color)}">
-          <span class="pw-rk">${t.prank}</span>${move(t.move)}${mark(t.name, "md")}
+      body = list.length ? `<div class="power">${list.map((t, i) => `<a class="pw-row card reveal" href="/team/${t.id}" data-link style="--tc:${esc(crestColor(t.color))}">
+          <span class="pw-rk">${state.lg ? i + 1 : t.prank}</span>${move(t.move)}${mark(t.name, "md")}
           <span class="pw-nm"><b>${esc(t.name)}</b><small>${recOf(t)} · ${diffTxt(t.diff)} PD · ${esc(t.streak || "")}</small></span>
           <span class="pw-bar"><i style="width:${((t.power || 0) / max) * 100}%"></i></span><span class="pw-v">${fmt(t.power)}</span></a>`).join("")}</div>
           <p class="note">Power score mixes record, point differential and recent form.</p>` : empty("No power rankings yet", "Power rankings start after the first week of games.", { join: false });
     }
-    return page(`${head(`Season ${esc(season())}`, "Standings", seg, "Standings")}${body}`);
+    return page(`${top(tools(lgSeg(), seg))}${body}`);
   }
 
   // ---------------------------------------------------------------- STATS
@@ -459,7 +503,7 @@
     const ask = new URLSearchParams(location.search).get("season");
     const opts = [...D.league.seasons.map(String).reverse(), ...(D.leaders.all ? ["all"] : [])];
     const s = opts.includes(ask) ? ask : season();
-    const rows = ((D.leaders[s] || {})[t.key] || []).map((r, i) => ({ ...r, rank: i + 1 }));
+    const rows = ((D.leaders[s] || {})[t.key] || []).filter((r) => inLg(r.team)).map((r, i) => ({ ...r, rank: i + 1 }));
     const q = s !== season() ? `?season=${s}` : "";
     const tabsNav = `<nav class="pills" aria-label="Stat categories">${D.tabs.map((x) => `<a class="${x.key === t.key ? "on" : ""}" href="/stats/${x.key.toLowerCase()}${q}" data-link><b>${esc(x.pos)}</b><span>${esc(x.label)}</span></a>`).join("")}</nav>`;
     const seasonSel = opts.length > 1 ? `<label class="sel"><span>Season</span><select id="seasonSel">${opts.map((o) => `<option value="${o}" ${o === s ? "selected" : ""}>${o === "all" ? "All time" : "Season " + o}</option>`).join("")}</select></label>` : "";
@@ -470,7 +514,7 @@
       $("#seasonSel")?.addEventListener("change", (e) => go(`/stats/${t.key.toLowerCase()}${e.target.value === season() ? "" : "?season=" + e.target.value}`));
       draw();
     });
-    return page(`${head(s === "all" ? "All time" : `Season ${esc(s)}`, `${esc(t.label)} <span>leaders</span>`, seasonSel, "Stats")}
+    return page(`${head(s === "all" ? "All time" : `Season ${esc(s)}`, `${esc(t.label)} <span>leaders</span>`, tools(lgSeg(), seasonSel), "Stats")}
       ${tabsNav}
       ${rows.length ? `<div class="top3">${top3.map((r, i) => {
         const tm = teamBy(r.team);
@@ -516,15 +560,17 @@
 
   // ---------------------------------------------------------------- TEAMS
   function teamsPage() {
-    const groups = D.conferences.map((c) => ({ name: c.name, teams: confTeams(c) })).filter((g) => g.teams.length);
-    const others = D.teams.filter((t) => !groups.some((g) => g.teams.includes(t)));
-    if (others.length) groups.push({ name: groups.length ? "Other teams" : "All teams", teams: others });
-    const card = (t) => `<a class="tcard reveal" href="/team/${t.id}" data-link style="--tc:${esc(t.color || "#6b4bb3")}">
+    const confs = confList();
+    const card = (t) => `<a class="tcard reveal" href="/team/${t.id}" data-link style="--tc:${esc(crestColor(t.color || "#6b4bb3"))}">
         <span class="tc-glow" aria-hidden="true"></span>${mark(t.name, "lg")}
-        <span class="tc-nm"><b>${esc(t.name)}</b><small>${t.gp ? `<em>${recOf(t)}</em>${t.conf ? ` · ${confRec(t)} conf` : ""} · <span class="${diffCls(t.diff)}">${diffTxt(t.diff)}</span>` : "No games yet"}</small>${t.gp ? form(t.last5) : ""}</span></a>`;
-    return page(`${head(`Season ${esc(season())}`, "Teams", "", "Teams")}
-      ${groups.length ? groups.map((g) => `<section class="blk-sm">${sh(esc(g.name), null, `${g.teams.length} teams`)}<div class="tgrid">${g.teams.map(card).join("")}</div></section>`).join("")
-        : empty("Teams coming soon", "Every RUFL team gets its own page here, with its roster, schedule and leaders.")}`);
+        <span class="tc-nm"><b>${esc(t.name)}</b><small>${t.gp ? `<em>${recOf(t)}</em>${t.conf ? ` · ${confRec(t)} conf` : ""} · <span class="${diffCls(t.diff)}">${diffTxt(t.diff)}</span>` : `${esc(t.conf || "")}${t.conf ? " · " : ""}No games yet`}</small>${t.gp ? form(t.last5) : ""}</span></a>`;
+    const groups = byLeague(confs);
+    const placed = new Set(confs.flatMap((c) => c.teams.map((t) => t.id)));
+    const others = D.teams.filter((t) => !placed.has(t.id) && inLg(t.name));
+    const html = groups.map((g) => `<section class="lg-block">${lgBanner(g.lg)}${g.confs.map((c) => `<section class="blk-sm">${sh(esc(c.name), null, `${esc(c.full !== c.name ? c.full + " · " : "")}${c.teams.length} teams`)}<div class="tgrid">${c.teams.map(card).join("")}</div></section>`).join("")}</section>`).join("")
+      + (others.length ? `<section class="blk-sm">${sh(groups.length ? "Other teams" : "All teams", null, `${others.length} teams`)}<div class="tgrid">${others.map(card).join("")}</div></section>` : "");
+    return page(`${head(`Season ${esc(season())}`, "Teams", tools(lgSeg()), "Teams")}
+      ${html || empty("Teams coming soon", "Every RUFL team gets its own page here, with its roster, schedule and leaders.")}`);
   }
 
   function teamPage(id) {
@@ -540,7 +586,7 @@
       <section class="ent-hero reveal ${lt ? "lt" : ""}" style="--tc:${esc(t.color || "#6b4bb3")}">
         <span class="ent-ghost" aria-hidden="true">${esc(t.abbr || abbr(t.name))}</span>
         ${mark(t.name, "xxl")}
-        <div class="ent-id"><p class="ent-k">${esc(t.conf || D.league.name)}${crank ? ` · ${ord(crank)} in conference` : ""}</p><h1>${esc(t.name)}</h1>
+        <div class="ent-id"><p class="ent-k">${esc([leagueOf(t.name), t.conf].filter(Boolean).join(" · ") || D.league.name)}${crank && t.gp ? ` · ${ord(crank)} in conference` : ""}</p><h1>${esc(t.name)}</h1>
           ${t.coach ? `<p class="ent-sub">Head coach <b>${esc(t.coach.name)}</b></p>` : ""}</div>
         <div class="ent-big"><b>${recOf(t) || "0-0"}</b><small>Record</small></div>
       </section>
@@ -622,8 +668,8 @@
   // ---------------------------------------------------------------- MVP / AWARDS / RECORDS / POINTS / RULES
   function mvpPage() {
     const s = season();
-    const rows = D.mvp[s] || [];
-    return page(`${head(`Season ${esc(s)}`, "MVP <span>race</span>", "", "MVP")}
+    const rows = (D.mvp[s] || []).filter((r) => inLg(r.team));
+    return page(`${head(`Season ${esc(s)}`, "MVP <span>race</span>", tools(lgSeg()), "MVP")}
       ${rows.length ? `${legend()}<div class="mvp-list">${mvpRows(rows, 50)}</div><p class="note">Total PTS across every position a player has stats at. The bar shows where the points come from.</p>`
         : empty("The race hasn't started", "The MVP race ranks every player by total PTS once games are posted.")}`);
   }
@@ -751,6 +797,11 @@
     // week / view switches
     $$("[data-week]", app).forEach((b) => b.addEventListener("click", () => { state.week = b.dataset.week; render(true); }));
     $$("[data-view]", app).forEach((b) => b.addEventListener("click", () => { state.view = b.dataset.view; history.replaceState({}, "", "/standings" + (b.dataset.view === "conf" ? "" : "?view=" + b.dataset.view)); render(true); }));
+    $$("[data-lg]", app).forEach((b) => b.addEventListener("click", () => {
+      state.lg = b.dataset.lg || null;
+      try { state.lg ? localStorage.setItem("rufl-lg", state.lg) : localStorage.removeItem("rufl-lg"); } catch (e) {}
+      render(true);
+    }));
     // spotlight
     $$(".fcard, .lcard, .tcard", app).forEach((c) => c.addEventListener("pointermove", (e) => {
       const r = c.getBoundingClientRect();

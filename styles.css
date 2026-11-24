@@ -781,3 +781,26 @@ details p{padding:0 24px 22px;color:var(--muted)}
   .h1-main,.reveal{opacity:1;transform:none}
   html{scroll-behavior:auto}
 }
+
+/* ============ leagues (NFL / CFB) ============ */
+.head-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.lg-seg button.on{background:linear-gradient(180deg,var(--purple-2),var(--purple));color:#fff;box-shadow:0 8px 20px -10px rgba(139,61,255,.9)}
+.lg-block{display:flex;flex-direction:column;gap:16px}
+.lg-block+.lg-block{margin-top:18px}
+.lg-stack{display:flex;flex-direction:column;gap:16px}
+.lg-banner{position:relative;display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:12px;overflow:hidden;isolation:isolate;
+  background:linear-gradient(90deg,rgba(139,61,255,.28),transparent 70%);box-shadow:0 0 0 1px var(--line) inset}
+.lg-banner::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--purple)}
+.lg-banner b{font:400 30px/1 var(--display);letter-spacing:.04em}
+.lg-banner span{font:700 13px/1 var(--cond);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.lg-banner.lg-NFL{background:linear-gradient(90deg,rgba(255,122,24,.22),transparent 70%)}
+.lg-banner.lg-NFL::before{background:var(--orange)}
+.lg-banner.lg-NFL b{color:var(--orange-2)}
+.lg-banner.lg-CFB b{color:var(--purple-2)}
+.st-grid.one{grid-template-columns:1fr}
+.ko-art{flex-direction:column;align-items:stretch;gap:16px}
+.ko-lg{display:flex;flex-direction:column;gap:8px}
+.ko-lg>b{font:700 13px/1 var(--cond);letter-spacing:.2em;color:var(--orange-2)}
+.ko-lg>div{display:flex;flex-wrap:wrap;gap:8px}
+.ko-lg span{animation:float 5s ease-in-out infinite;animation-delay:calc(var(--i) * -.35s)}
+@media (max-width:640px){.head-tools{width:100%}.head-tools .seg{max-width:100%;overflow-x:auto}.lg-banner b{font-size:24px}}
