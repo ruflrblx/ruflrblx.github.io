@@ -804,3 +804,8 @@ details p{padding:0 24px 22px;color:var(--muted)}
 .ko-lg>div{display:flex;flex-wrap:wrap;gap:8px}
 .ko-lg span{animation:float 5s ease-in-out infinite;animation-delay:calc(var(--i) * -.35s)}
 @media (max-width:640px){.head-tools{width:100%}.head-tools .seg{max-width:100%;overflow-x:auto}.lg-banner b{font-size:24px}}
+/* official team logos (replace the crest when a team has one) */
+.crest.has-img{height:var(--s)}
+.crest.has-img img{filter:drop-shadow(0 2px 5px rgba(0,0,0,.45));transition:transform .3s var(--ease)}
+a:hover>.crest.has-img img,.tcard:hover .crest.has-img img{transform:scale(1.08)}
+.ent-hero .crest.has-img img{filter:drop-shadow(0 14px 26px rgba(0,0,0,.55))}
