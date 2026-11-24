@@ -773,7 +773,7 @@
     const c0 = cached();
     if (c0 && Date.now() - c0.t < 600000) { live = c0.v; fillLive(); return; }
     const code = invite().split("/").pop();
-    fetch(`https://discord.com/api/v9/invites/${encodeURIComponent(code)}?with_counts=true`, { cache: "no-store" })
+    fetch(`https://discord.com/api/v9/invites/${encodeURIComponent(code)}?with_counts=true&_=${Date.now()}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d) => {
         live = { members: d.approximate_member_count, online: d.approximate_presence_count }; fillLive();
